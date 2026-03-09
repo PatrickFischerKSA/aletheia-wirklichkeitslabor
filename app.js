@@ -316,7 +316,6 @@ function renderLanding() {
         <div class="image-stage-copy">
           <p class="eyebrow">Visuelle Leitfigur</p>
           <h2 class="section-title">Byproxy zwischen Beobachtung, Verletzlichkeit und Deutungsmacht</h2>
-          <p class="subtle">Das Bild ist jetzt bewusst als eigene Bildbühne in die Startseite eingesetzt und nicht mehr nur als kaum sichtbare Hintergrundtextur.</p>
         </div>
       </div>
     </section>
