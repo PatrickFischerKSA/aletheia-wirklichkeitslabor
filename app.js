@@ -250,6 +250,16 @@ function formatTime(isoString) {
   });
 }
 
+function germanize(value) {
+  return String(value || "")
+    .replaceAll("Ae", "Ä")
+    .replaceAll("Oe", "Ö")
+    .replaceAll("Ue", "Ü")
+    .replaceAll("ae", "ä")
+    .replaceAll("oe", "ö")
+    .replaceAll("ue", "ü");
+}
+
 function deadlineText(deadline) {
   if (!deadline) {
     return "ohne Timer";
@@ -262,7 +272,7 @@ function deadlineText(deadline) {
 }
 
 function escapeHtml(value) {
-  return String(value || "")
+  return germanize(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -274,7 +284,7 @@ function button(label, action, className = "") {
 }
 
 function renderLanding() {
-  root.innerHTML = `
+  root.innerHTML = germanize(`
     <section class="hero">
       <div>
         <p class="eyebrow">Synchronisierte Lernlandschaft fuer "Die echtere Wirklichkeit"</p>
@@ -366,7 +376,7 @@ function renderLanding() {
     </section>
 
     <p class="footer-note">${BUILD_ID} | Wenn ein Endgeraet die URL des Host-Geraets im selben WLAN oeffnet, wird die Partie live synchronisiert.</p>
-  `;
+  `);
 }
 
 function renderNav() {
@@ -655,9 +665,9 @@ function renderHostPanel() {
         <div class="connection-card">
           <strong>Join-Links</strong>
           <div class="stack" style="margin-top:12px;">
-            <div class="linkline"><div class="linkbox">${escapeHtml(links.playerA)}</div>${button("Link A kopieren", "copy-playerA", "ghost")}</div>
-            <div class="linkline"><div class="linkbox">${escapeHtml(links.playerB)}</div>${button("Link B kopieren", "copy-playerB", "ghost")}</div>
-            <div class="linkline"><div class="linkbox">${escapeHtml(links.board)}</div>${button("Board-Link kopieren", "copy-board", "ghost")}</div>
+            <div class="linkline"><a class="linkbox" href="${escapeHtml(links.playerA)}" target="_blank" rel="noreferrer">${escapeHtml(links.playerA)}</a>${button("Link A kopieren", "copy-playerA", "ghost")}</div>
+            <div class="linkline"><a class="linkbox" href="${escapeHtml(links.playerB)}" target="_blank" rel="noreferrer">${escapeHtml(links.playerB)}</a>${button("Link B kopieren", "copy-playerB", "ghost")}</div>
+            <div class="linkline"><a class="linkbox" href="${escapeHtml(links.board)}" target="_blank" rel="noreferrer">${escapeHtml(links.board)}</a>${button("Board-Link kopieren", "copy-board", "ghost")}</div>
           </div>
         </div>
         <div class="dual-grid">
@@ -873,7 +883,7 @@ function renderTeacherTab() {
 }
 
 function renderConnected() {
-  root.innerHTML = `
+  root.innerHTML = germanize(`
     <section class="hero">
       <div>
         <p class="eyebrow">${state.view === "host" ? "Host-Modus" : state.view === "player" ? `Privatmodus ${escapeHtml(state.seat)}` : "Board-Modus"}</p>
@@ -910,7 +920,7 @@ function renderConnected() {
       </section>
     </div>
     <p class="footer-note">${BUILD_ID} | Alle Inhalte bleiben lokal im Klassennetz auf dem gestarteten Server. Keine externen Dienste.</p>
-  `;
+  `);
 }
 
 function render() {
