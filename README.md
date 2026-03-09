@@ -41,8 +41,8 @@ Die App ist jetzt auch fuer einen echten Node-Host vorbereitet:
 
 - `package.json` fuer Startskript und Node-Version
 - `Dockerfile` fuer Container-Deployments
-- `.github/workflows/check.yml` fuer GitHub-Checks
-- `.github/workflows/publish-ghcr.yml` fuer automatisches Container-Publishing nach GHCR
+- `.github/workflows/aletheia-check.yml` im Repo-Root fuer GitHub-Checks
+- `.github/workflows/aletheia-publish-ghcr.yml` im Repo-Root fuer automatisches Container-Publishing nach GHCR
 - `render.yaml` fuer Render-Blueprint-Deployments
 - `railway.json` fuer Railway-Deployments
 - `PORT`- und `HOST`-Support ueber Umgebungsvariablen

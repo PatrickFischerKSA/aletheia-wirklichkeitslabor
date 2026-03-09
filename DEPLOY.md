@@ -19,8 +19,8 @@ Die sinnvolle GitHub-Variante ist:
 
 Im Repo liegen dafuer bereits:
 
-- [.github/workflows/check.yml](/Users/patrickfischer/Documents/New%20project/aletheia-wirklichkeitslabor/.github/workflows/check.yml)
-- [.github/workflows/publish-ghcr.yml](/Users/patrickfischer/Documents/New%20project/aletheia-wirklichkeitslabor/.github/workflows/publish-ghcr.yml)
+- [.github/workflows/aletheia-check.yml](/Users/patrickfischer/Documents/New%20project/.github/workflows/aletheia-check.yml)
+- [.github/workflows/aletheia-publish-ghcr.yml](/Users/patrickfischer/Documents/New%20project/.github/workflows/aletheia-publish-ghcr.yml)
 - [Dockerfile](/Users/patrickfischer/Documents/New%20project/aletheia-wirklichkeitslabor/Dockerfile)
 
 Nach dem ersten Push auf `main` entsteht dein Container unter:
