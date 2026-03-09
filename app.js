@@ -402,7 +402,45 @@ function currentOrigin() {
   return window.location.origin;
 }
 
+function isUnsupportedStaticOrigin() {
+  const { protocol, hostname } = window.location;
+  return protocol === "file:" || hostname.endsWith("github.io");
+}
+
+function renderStaticBlocker() {
+  root.innerHTML = germanize(`
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Falsche Instanz</p>
+        <h1 class="title">Diese Version ist nur eine statische Vorschau</h1>
+        <p class="lead">Hier laeuft keine Spiel-API. Raumanlage, Join, Solo-Modus und Reset funktionieren nur auf dem lokal gestarteten Spielserver.</p>
+      </div>
+      <div class="hero-actions">
+        <div class="meta-list">
+          <span class="meta-badge">Aktuell geoeffnet: ${escapeHtml(currentOrigin())}</span>
+          <span class="meta-badge">GitHub-/statische Version erkannt</span>
+          <span class="meta-badge">Nur <code>http</code>, nicht <code>https</code></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="danger-note">
+        <strong>Diese Seite ist absichtlich gesperrt.</strong>
+        <p>Oeffne stattdessen den laufenden lokalen Spielserver:</p>
+        <p><a class="linkbox" href="http://localhost:8787" target="_blank" rel="noreferrer">http://localhost:8787</a></p>
+        <p><a class="linkbox" href="http://192.168.1.207:8787" target="_blank" rel="noreferrer">http://192.168.1.207:8787</a></p>
+        <p>Wenn diese Adressen nicht funktionieren, muss im Projektordner zuerst <code>node server.mjs --host 0.0.0.0 --port 8787</code> laufen.</p>
+      </div>
+    </section>
+  `);
+}
+
 function renderLanding() {
+  if (isUnsupportedStaticOrigin()) {
+    renderStaticBlocker();
+    return;
+  }
   root.innerHTML = germanize(`
     <section class="hero">
       <div>
