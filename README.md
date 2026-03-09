@@ -16,13 +16,13 @@ Die App ist keine lokale Einzelseite mehr, sondern ein synchronisiertes Klassenz
 - Live-Feed, private Inboxen, Timer und Systemeingriffe
 - exportierbares JSON- und Markdown-Protokoll
 
-## Start
+## Lokal starten
 
 Im Projektordner:
 
 ```bash
 cd /Users/patrickfischer/Documents/New\ project/aletheia-wirklichkeitslabor
-node server.mjs --host 0.0.0.0 --port 8787
+npm start
 ```
 
 Danach:
@@ -31,9 +31,46 @@ Danach:
 2. Entweder einen Mehrgeraete-Raum anlegen oder direkt eine Solo-Partie starten.
 3. Im Mehrgeraete-Modus die angezeigten Links fuer Spieler*in A, Spieler*in B und optional das Board an die Endgeraete verteilen.
 4. Die beiden Spielenden treten mit ihren eigenen Geraeten bei oder die Solo-Partie laeuft sofort gegen den Systempartner an.
-5. Im Mehrgeraete-Modus die Partie starten.
+5. Im Mehrgeraete-Modus startet das Spiel automatisch, sobald Sitz A und B verbunden sind.
 
 Der Server gibt beim Start auch die LAN-/WLAN-Adressen aus. Genau diese URL muessen die anderen Geraete im selben Netz verwenden.
+
+## Oeffentlich deployen
+
+Die App ist jetzt auch fuer einen echten Node-Host vorbereitet:
+
+- `package.json` fuer Startskript und Node-Version
+- `Dockerfile` fuer Container-Deployments
+- `PORT`- und `HOST`-Support ueber Umgebungsvariablen
+
+Jeder Node- oder Docker-Host funktioniert, solange `server.mjs` als Webdienst gestartet wird.
+
+### Variante A: Node-Host
+
+```bash
+npm start
+```
+
+Der Host muss eingehende Verbindungen auf dem vom Provider gesetzten `PORT` erlauben. Das Skript liest `PORT` automatisch aus der Umgebung.
+
+### Variante B: Docker-Host
+
+```bash
+docker build -t aletheia-wirklichkeitslabor .
+docker run -p 8787:8787 aletheia-wirklichkeitslabor
+```
+
+### Geeignete Plattformen
+
+- jeder VPS mit Node 20+
+- jeder Container-Host, der ein `Dockerfile` starten kann
+- klassische Web-App-Hosts fuer Node-Dienste
+
+Wichtig:
+
+- Die aktuelle Spielstate liegt im Arbeitsspeicher des Servers.
+- Ein Neustart des Servers loescht laufende Raeume und Partien.
+- Fuer Unterricht mit echten Klassen sollte der Dienst deshalb stabil durchlaufen und nicht schlafen gelegt werden.
 
 ## Modi
 

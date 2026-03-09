@@ -1731,8 +1731,12 @@ const server = createServer(async (req, res) => {
 
 const portArgIndex = process.argv.findIndex((arg) => arg === "--port");
 const hostArgIndex = process.argv.findIndex((arg) => arg === "--host");
-const PORT = portArgIndex >= 0 ? Number(process.argv[portArgIndex + 1]) : 8787;
-const HOST = hostArgIndex >= 0 ? String(process.argv[hostArgIndex + 1]) : "0.0.0.0";
+const PORT = portArgIndex >= 0
+  ? Number(process.argv[portArgIndex + 1])
+  : Number(process.env.PORT || 8787);
+const HOST = hostArgIndex >= 0
+  ? String(process.argv[hostArgIndex + 1])
+  : String(process.env.HOST || "0.0.0.0");
 
 server.listen(PORT, HOST, () => {
   logNetworkHints(PORT);

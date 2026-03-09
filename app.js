@@ -107,7 +107,7 @@ async function ensureBackend() {
   if (ready) {
     return true;
   }
-  throw new Error(`Diese geoeffnete Seite kommt nicht vom laufenden Spielserver. Aktuell offen: ${currentOrigin()}. Starte \`node server.mjs --host 0.0.0.0 --port 8787\` und oeffne danach genau die dort laufende Adresse per \`http\`, nicht eine alte Datei oder eine andere URL.`);
+  throw new Error(`Diese geoeffnete Seite kommt nicht vom laufenden Spielserver. Aktuell offen: ${currentOrigin()}. Starte lokal \`node server.mjs --host 0.0.0.0 --port 8787\` oder oeffne die korrekt deployte Server-URL. Eine statische Vorschau oder falsche Domain reicht nicht aus.`);
 }
 
 async function api(path, options = {}) {
@@ -413,13 +413,13 @@ function renderStaticBlocker() {
       <div>
         <p class="eyebrow">Falsche Instanz</p>
         <h1 class="title">Diese Version ist nur eine statische Vorschau</h1>
-        <p class="lead">Hier laeuft keine Spiel-API. Raumanlage, Join, Solo-Modus und Reset funktionieren nur auf dem lokal gestarteten Spielserver.</p>
+        <p class="lead">Hier laeuft keine Spiel-API. Raumanlage, Join, Solo-Modus und Reset funktionieren nur auf einem lokal gestarteten oder richtig deployten Spielserver.</p>
       </div>
       <div class="hero-actions">
         <div class="meta-list">
           <span class="meta-badge">Aktuell geoeffnet: ${escapeHtml(currentOrigin())}</span>
           <span class="meta-badge">GitHub-/statische Version erkannt</span>
-          <span class="meta-badge">Nur <code>http</code>, nicht <code>https</code></span>
+          <span class="meta-badge">Ohne Backend nicht spielbar</span>
         </div>
       </div>
     </section>
@@ -427,10 +427,10 @@ function renderStaticBlocker() {
     <section class="panel">
       <div class="danger-note">
         <strong>Diese Seite ist absichtlich gesperrt.</strong>
-        <p>Oeffne stattdessen den laufenden lokalen Spielserver:</p>
+        <p>Oeffne stattdessen den laufenden lokalen Spielserver oder die echte Deploy-URL:</p>
         <p><a class="linkbox" href="http://localhost:8787" target="_blank" rel="noreferrer">http://localhost:8787</a></p>
         <p><a class="linkbox" href="http://192.168.1.207:8787" target="_blank" rel="noreferrer">http://192.168.1.207:8787</a></p>
-        <p>Wenn diese Adressen nicht funktionieren, muss im Projektordner zuerst <code>node server.mjs --host 0.0.0.0 --port 8787</code> laufen.</p>
+        <p>Wenn diese Adressen nicht funktionieren, muss lokal <code>node server.mjs --host 0.0.0.0 --port 8787</code> laufen oder die App auf einem echten Node-Host deployt werden.</p>
       </div>
     </section>
   `);
@@ -457,7 +457,7 @@ function renderLanding() {
       </div>
       <div class="hero-actions">
         <div class="meta-list">
-          <span class="meta-badge">Server noetig: <code>node server.mjs --host 0.0.0.0 --port 8787</code></span>
+          <span class="meta-badge">Server noetig: lokal <code>node server.mjs --host 0.0.0.0 --port 8787</code> oder oeffentliche Deploy-URL</span>
           <span class="meta-badge">Solo oder zwei Endgeraete + optionales Board</span>
           <span class="meta-badge">Raumcode + Live-Synchronisierung</span>
           <span class="meta-badge">${BUILD_ID}</span>
@@ -470,9 +470,9 @@ function renderLanding() {
 
     <section class="panel">
       <div class="danger-note">
-        <strong>Wichtig: Diese App läuft nur über <code>http</code>, nicht über <code>https</code>.</strong>
+        <strong>Wichtig: Alle Geraete muessen dieselbe Server-URL verwenden.</strong>
         <p>Aktuelle Adresse: <a class="linkbox" href="${escapeHtml(currentOrigin())}" target="_blank" rel="noreferrer">${escapeHtml(currentOrigin())}</a></p>
-        <p>Andere Geräte im selben WLAN müssen genau diese Art von Adresse öffnen, also zum Beispiel <code>http://192.168.1.207:8787</code> und nicht <code>https://…</code>.</p>
+        <p>Lokal ist das meist <code>http://192.168.1.207:8787</code>. Auf einer oeffentlichen Web-Version wird es dagegen eine normale <code>https://...</code>-Adresse sein.</p>
       </div>
     </section>
 
@@ -1016,8 +1016,8 @@ function renderHostPanel() {
       </div>
       <div class="stack">
         <div class="danger-note">
-          <strong>Nur <code>http</code> verwenden.</strong>
-          <p>Wenn andere Geräte beim Öffnen der Links automatisch auf <code>https</code> wechseln, funktioniert die App nicht. Die Basisadresse lautet hier: <code>${escapeHtml(currentOrigin())}</code></p>
+          <strong>Alle Endgeraete muessen exakt diese Server-URL verwenden.</strong>
+          <p>Die Basisadresse lautet hier: <code>${escapeHtml(currentOrigin())}</code>. Lokal ist das meist eine <code>http://</code>-Adresse, bei einer oeffentlichen Web-Version eine <code>https://</code>-Adresse.</p>
         </div>
         <div class="connection-card">
           <strong>Join-Links</strong>
