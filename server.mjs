@@ -417,9 +417,11 @@ function applyDelta(metrics, delta) {
 function buildRoom(data = {}) {
   const roomId = randomId(5);
   const hostToken = randomId(18);
+  const mode = data.mode === "solo" ? "solo" : "multi";
   const room = {
     id: roomId,
     hostToken,
+    mode,
     createdAt: nowIso(),
     teamName: (data.teamName || "Aletheia-Team").trim(),
     className: (data.className || "").trim(),
@@ -443,11 +445,25 @@ function buildRoom(data = {}) {
     outcome: null,
     streams: new Set()
   };
-  appendFeed(room, "public", "Raum angelegt", "Der Spielraum ist bereit. Zwei Endgeraete koennen jetzt als Spieler*in A und B beitreten.", "system");
+  if (mode === "solo") {
+    room.seats.A.name = (data.playerName || "Solo-Spieler*in").trim() || "Solo-Spieler*in";
+    room.seats.A.token = hostToken;
+    room.seats.A.joinedAt = nowIso();
+    room.seats.B.name = "Systempartner";
+    room.seats.B.token = "SYSTEM";
+    room.seats.B.joinedAt = nowIso();
+    appendFeed(room, "public", "Solo-Partie angelegt", "Die Solo-Partie ist bereit. Der Systempartner wird automatisch reagieren.", "system");
+    resetGame(room);
+  } else {
+    appendFeed(room, "public", "Raum angelegt", "Der Spielraum ist bereit. Zwei Endgeraete koennen jetzt als Spieler*in A und B beitreten.", "system");
+  }
   return room;
 }
 
 function roomNeedsBothSeats(room) {
+  if (room.mode === "solo") {
+    return Boolean(room.seats.A.token);
+  }
   return Boolean(room.seats.A.token && room.seats.B.token);
 }
 
@@ -461,6 +477,9 @@ function validateViewer(room, viewer) {
   if (viewer.mode === "player") {
     return viewer.seat && viewer.token && room.seats[viewer.seat]?.token === viewer.token;
   }
+  if (viewer.mode === "solo") {
+    return room.mode === "solo" && viewer.token && viewer.token === room.hostToken;
+  }
   return false;
 }
 
@@ -471,7 +490,148 @@ function canControlRoom(room, viewer) {
   if (viewer.mode === "player" && validateViewer(room, viewer)) {
     return true;
   }
+  if (viewer.mode === "solo" && validateViewer(room, viewer)) {
+    return true;
+  }
   return false;
+}
+
+function clueForFragment(fragment) {
+  const axis = fragment.axes[0];
+  const map = {
+    wahrheit: "zu glatt, um neutral zu sein",
+    beobachtung: "jemand sieht mehr, als gesagt wird",
+    aktion: "zu schnell fuer reine Theorie",
+    technik: "sauber und trotzdem gefaehrlich",
+    loyalitaet: "hinter der Geste steckt Bindung",
+    kontrolle: "es riecht nach Regel und Zugriff"
+  };
+  return map[axis] || "mehr als bloss Oberfläche";
+}
+
+function chooseSoloFragment(room) {
+  const round = room.currentRound;
+  const dossier = DOSSIERS.find((entry) => entry.id === round.dossierId);
+  const hand = round.fragmentHands.B.map((id) => FRAGMENTS.find((entry) => entry.id === id));
+  const weighted = hand.map((fragment) => {
+    let weight = 2;
+    if (fragment.axes.some((axis) => dossier.tags.includes(axis))) {
+      weight += 3;
+    }
+    if (fragment.figures.includes(round.shadowFigureId)) {
+      weight += 2;
+    }
+    return { item: fragment, weight };
+  });
+  const fragment = weightedPick(weighted);
+  return {
+    fragmentId: fragment.id,
+    clue: clueForFragment(fragment)
+  };
+}
+
+function chooseSoloGuess(fragmentId) {
+  const fragment = FRAGMENTS.find((entry) => entry.id === fragmentId);
+  if (Math.random() < 0.72) {
+    return fragment.axes[0];
+  }
+  const otherAxes = AXES.map((axis) => axis.id).filter((axisId) => !fragment.axes.includes(axisId));
+  return sample(otherAxes, 1)[0];
+}
+
+function chooseSoloDoctrine(room) {
+  const round = room.currentRound;
+  const remaining = round.doctrineHand.filter((id) => id !== round.doctrineDiscard).map((id) => DOCTRINES.find((entry) => entry.id === id));
+  const dossier = DOSSIERS.find((entry) => entry.id === round.dossierId);
+  const weighted = remaining.map((card) => {
+    let weight = 2;
+    if (card.family === "vermittlung" && room.metrics.vertrauen < 46) {
+      weight += 4;
+    }
+    if (card.family === "absolut" && dossier.tags.includes("dogma")) {
+      weight += 3;
+    }
+    if (card.family === "nebel" && room.metrics.ambig < 60 && dossier.tags.includes("nebel")) {
+      weight += 2;
+    }
+    if (card.family === "aktion" && dossier.tags.includes("aktion")) {
+      weight += 2;
+    }
+    return { item: card, weight };
+  });
+  return weightedPick(weighted).id;
+}
+
+function chooseSoloResponse(room) {
+  const round = room.currentRound;
+  const suspectId = Math.random() < 0.68
+    ? round.shadowFigureId
+    : sample(FIGURES.map((entry) => entry.id).filter((id) => id !== round.shadowFigureId), 1)[0];
+  const trustPool = FIGURES.filter((entry) => ["loyalitaet", "beobachtung"].includes(entry.axis));
+  const trustFigureId = weightedPick(trustPool.map((entry) => ({
+    item: entry.id,
+    weight: entry.axis === "loyalitaet" && room.metrics.vertrauen < 52 ? 5 : 2
+  })));
+  const moves = round.responseOptions.map((id) => RESPONSE_MOVES.find((entry) => entry.id === id));
+  const moveId = weightedPick(moves.map((move) => {
+    let weight = 2;
+    if (move.family === "shield" && room.metrics.vertrauen < 48) {
+      weight += 4;
+    }
+    if (move.family === "countervoice" && room.metrics.druck > 62) {
+      weight += 3;
+    }
+    if (move.family === "launder" && room.metrics.ambig < 64) {
+      weight += 2;
+    }
+    return { item: move.id, weight };
+  }));
+  return {
+    suspectId,
+    trustFigureId,
+    moveId,
+    accusePartner: false
+  };
+}
+
+function buildSoloReflection(room) {
+  const round = room.currentRound;
+  const dossier = DOSSIERS.find((entry) => entry.id === round.dossierId);
+  const doctrine = DOCTRINES.find((entry) => entry.id === round.doctrineEnacted);
+  return `Der Systempartner liest ${dossier.title} vor allem als Konflikt aus ${doctrine.family} und verdeckter Machtverschiebung.`;
+}
+
+function advanceSoloRoom(room) {
+  if (room.mode !== "solo" || !room.currentRound) {
+    return;
+  }
+  const round = room.currentRound;
+  if (room.phase === "fragment-submit" && round.fragmentSelections.A && !round.fragmentSelections.B) {
+    round.fragmentSelections.B = chooseSoloFragment(room);
+    appendFeed(room, "public", "Systempartner reagiert", "Der Systempartner hat sein Fragmentsignal verdeckt gesetzt.", "system");
+    setPhase(room, "fragment-guess");
+    return;
+  }
+  if (room.phase === "fragment-guess" && round.fragmentGuesses.A && !round.fragmentGuesses.B) {
+    round.fragmentGuesses.B = chooseSoloGuess(round.fragmentSelections.A.fragmentId);
+    resolveFragments(room);
+    return;
+  }
+  if (room.phase === "doctrine-discard" && round.doctrineDiscard && !round.doctrineEnacted) {
+    round.doctrineEnacted = chooseSoloDoctrine(room);
+    resolveDoctrine(room);
+    return;
+  }
+  if (room.phase === "response" && round.responseSelections.A && !round.responseSelections.B) {
+    round.responseSelections.B = chooseSoloResponse(room);
+    appendFeed(room, "public", "Systempartner interveniert", "Der Systempartner hat Verdacht und Gegenmassnahme eingetragen.", "system");
+    resolveResponses(room);
+    return;
+  }
+  if (room.phase === "reflection" && round.reflections.A && !round.reflections.B) {
+    round.reflections.B = buildSoloReflection(room);
+    closeRound(room);
+  }
 }
 
 function dominantDoctrine(room) {
@@ -671,9 +831,11 @@ function startRound(room) {
   };
   room.status = "active";
   setPhase(room, "fragment-submit");
-  appendFeed(room, "public", `Runde ${room.round}: ${dossier.title}`, `${dossier.teaser} Die Engine hat die Lage veraendert und wartet auf zwei private Fragmentsignale.`, "system");
+  appendFeed(room, "public", `Runde ${room.round}: ${dossier.title}`, `${dossier.teaser} Die Engine hat die Lage veraendert und wartet auf ${room.mode === "solo" ? "dein" : "zwei private"} Fragmentsignal${room.mode === "solo" ? "" : "e"}.`, "system");
   appendFeed(room, "A", "Private Zuschrift", buildPrivateWhisper(room, "A", dossier, shadowFigure), "private");
-  appendFeed(room, "B", "Private Zuschrift", buildPrivateWhisper(room, "B", dossier, shadowFigure), "private");
+  if (room.mode !== "solo") {
+    appendFeed(room, "B", "Private Zuschrift", buildPrivateWhisper(room, "B", dossier, shadowFigure), "private");
+  }
 }
 
 function resetGame(room) {
@@ -926,7 +1088,13 @@ function closeRound(room) {
     title: dossier.title,
     doctrine: round.doctrineResolution.enactedTitle,
     shadowFigure: shadow.name,
-    summary: round.responseResolution.correctA && round.responseResolution.correctB ? "Beide Spielenden haben den Schatten korrekt markiert." : "Die Runde blieb strittig und asymmetrisch gelesen.",
+    summary: round.responseResolution.correctA && round.responseResolution.correctB
+      ? room.mode === "solo"
+        ? "Du und der Systempartner habt dieselbe Spur getroffen."
+        : "Beide Spielenden haben den Schatten korrekt markiert."
+      : room.mode === "solo"
+        ? "Deine Lesart und die Systemreaktion blieben gegeneinander versetzt."
+        : "Die Runde blieb strittig und asymmetrisch gelesen.",
     reflectionA: round.reflections.A,
     reflectionB: round.reflections.B,
     metricsAfter: { ...room.metrics }
@@ -950,7 +1118,11 @@ function buildPlayerTask(room, seat) {
     return {
       type: "lobby",
       title: "Warten auf Spielstart",
-      text: roomNeedsBothSeats(room) ? "Beide Sitze sind belegt. Die Partie kann jetzt gestartet werden." : "Sobald beide Sitze belegt sind, kann die Partie starten."
+      text: room.mode === "solo"
+        ? "Die Solo-Partie kann direkt gestartet werden."
+        : roomNeedsBothSeats(room)
+          ? "Beide Sitze sind belegt. Die Partie kann jetzt gestartet werden."
+          : "Sobald beide Sitze belegt sind, kann die Partie starten."
     };
   }
   if (room.phase === "finished") {
@@ -1179,6 +1351,26 @@ function snapshotFor(room, viewer) {
       }
     };
   }
+  if (viewer.mode === "solo" && validateViewer(room, viewer)) {
+    const missionFigure = playerMissionFigure(room, "A");
+    return {
+      ...base,
+      actor: {
+        mode: "solo",
+        seat: "A",
+        name: room.seats.A.name,
+        mission: missionFigure?.mission ? {
+          title: missionFigure.mission.title,
+          role: missionFigure.role,
+          goal: missionFigure.mission.goal,
+          blindSpot: missionFigure.mission.blindSpot
+        } : null,
+        systemPartner: room.seats.B.name,
+        privateFeed: [...room.privateFeed.A].reverse(),
+        task: buildPlayerTask(room, "A")
+      }
+    };
+  }
   if (viewer.mode === "host" && validateViewer(room, viewer)) {
     return {
       ...base,
@@ -1238,7 +1430,8 @@ function handleRoomAction(room, viewer, type, payload = {}) {
   }
 
   const seat = viewer.mode === "player" ? viewer.seat : payload.seat;
-  if (!seat || !room.seats[seat]) {
+  const resolvedSeat = viewer.mode === "solo" ? "A" : seat;
+  if (!resolvedSeat || !room.seats[resolvedSeat]) {
     throw new Error("Ungueltiger Sitz.");
   }
 
@@ -1255,12 +1448,14 @@ function handleRoomAction(room, viewer, type, payload = {}) {
     if (!fragment) {
       throw new Error("Fragment nicht gefunden.");
     }
-    round.fragmentSelections[seat] = {
+    round.fragmentSelections[resolvedSeat] = {
       fragmentId: fragment.id,
       clue: String(payload.clue || "").trim().slice(0, 160)
     };
-    appendFeed(room, "public", "Verdeckte Eingabe", `${room.seats[seat].name || `Spieler*in ${seat}`} hat ein Fragmentsignal an die Engine uebergeben.`, "system");
-    if (round.fragmentSelections.A && round.fragmentSelections.B) {
+    appendFeed(room, "public", "Verdeckte Eingabe", `${room.seats[resolvedSeat].name || `Spieler*in ${resolvedSeat}`} hat ein Fragmentsignal an die Engine uebergeben.`, "system");
+    if (room.mode === "solo") {
+      advanceSoloRoom(room);
+    } else if (round.fragmentSelections.A && round.fragmentSelections.B) {
       setPhase(room, "fragment-guess");
       appendFeed(room, "public", "Hinweise freigegeben", "Die metaphorischen Spuren liegen offen. Jetzt muessen Achsen gelesen werden.", "system");
     }
@@ -1274,23 +1469,30 @@ function handleRoomAction(room, viewer, type, payload = {}) {
     if (!AXES.some((axis) => axis.id === payload.axisId)) {
       throw new Error("Achse nicht gefunden.");
     }
-    round.fragmentGuesses[seat] = payload.axisId;
-    if (round.fragmentGuesses.A && round.fragmentGuesses.B) {
+    round.fragmentGuesses[resolvedSeat] = payload.axisId;
+    if (room.mode === "solo") {
+      advanceSoloRoom(room);
+    } else if (round.fragmentGuesses.A && round.fragmentGuesses.B) {
       resolveFragments(room);
     }
     return;
   }
 
   if (type === "doctrine-discard") {
-    if (room.phase !== "doctrine-discard" || seat !== "A") {
+    if (room.phase !== "doctrine-discard" || resolvedSeat !== "A") {
       throw new Error("Nur Spieler*in A kann jetzt verwerfen.");
     }
     if (!round.doctrineHand.includes(payload.cardId)) {
       throw new Error("Doktrin nicht in der Hand.");
     }
     round.doctrineDiscard = payload.cardId;
-    setPhase(room, "doctrine-enact");
-    appendFeed(room, "public", "Doktrin reduziert", "Eine Karte ist aus dem sichtbaren Spiel entfernt worden. Spieler*in B setzt jetzt das Gesetz.", "system");
+    if (room.mode === "solo") {
+      appendFeed(room, "public", "Doktrin reduziert", "Die sichtbare Auswahl wurde verkleinert. Der Systempartner setzt sofort das Gegengesetz.", "system");
+      advanceSoloRoom(room);
+    } else {
+      setPhase(room, "doctrine-enact");
+      appendFeed(room, "public", "Doktrin reduziert", "Eine Karte ist aus dem sichtbaren Spiel entfernt worden. Spieler*in B setzt jetzt das Gesetz.", "system");
+    }
     return;
   }
 
@@ -1320,14 +1522,16 @@ function handleRoomAction(room, viewer, type, payload = {}) {
     if (!round.responseOptions.includes(payload.moveId)) {
       throw new Error("Intervention nicht verfuegbar.");
     }
-    round.responseSelections[seat] = {
+    round.responseSelections[resolvedSeat] = {
       suspectId: payload.suspectId,
       trustFigureId: payload.trustFigureId,
       moveId: payload.moveId,
       accusePartner: Boolean(payload.accusePartner)
     };
-    appendFeed(room, "public", "Private Intervention", `${room.seats[seat].name || `Spieler*in ${seat}`} hat Verdacht und Eingriff ans System gemeldet.`, "system");
-    if (round.responseSelections.A && round.responseSelections.B) {
+    appendFeed(room, "public", "Private Intervention", `${room.seats[resolvedSeat].name || `Spieler*in ${resolvedSeat}`} hat Verdacht und Eingriff ans System gemeldet.`, "system");
+    if (room.mode === "solo") {
+      advanceSoloRoom(room);
+    } else if (round.responseSelections.A && round.responseSelections.B) {
       resolveResponses(room);
     }
     return;
@@ -1337,8 +1541,10 @@ function handleRoomAction(room, viewer, type, payload = {}) {
     if (room.phase !== "reflection") {
       throw new Error("Reflexion ist noch nicht offen.");
     }
-    round.reflections[seat] = String(payload.text || "").trim().slice(0, 650);
-    if (round.reflections.A && round.reflections.B) {
+    round.reflections[resolvedSeat] = String(payload.text || "").trim().slice(0, 650);
+    if (room.mode === "solo") {
+      advanceSoloRoom(room);
+    } else if (round.reflections.A && round.reflections.B) {
       closeRound(room);
     }
     return;
@@ -1403,7 +1609,8 @@ const server = createServer(async (req, res) => {
       ROOMS.set(room.id, room);
       sendJson(res, 201, {
         roomId: room.id,
-        hostToken: room.hostToken
+        hostToken: room.hostToken,
+        mode: room.mode
       });
     } catch (error) {
       sendError(res, 400, error.message);

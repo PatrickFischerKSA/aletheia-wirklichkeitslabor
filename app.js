@@ -19,6 +19,7 @@ const state = {
   createDraft: {
     teamName: "",
     className: "",
+    playerName: "",
     roundLimit: 6
   },
   error: "",
@@ -75,7 +76,7 @@ function applyUrlHints() {
     state.seat = seat;
     state.joinDraft.seat = seat;
   }
-  if (mode === "player" || mode === "board" || mode === "host") {
+  if (mode === "player" || mode === "board" || mode === "host" || mode === "solo") {
     state.view = mode;
   }
 }
@@ -137,6 +138,9 @@ function viewerParams() {
   }
   if (state.view === "player") {
     return { viewer: "player", seat: state.seat, token: state.token };
+  }
+  if (state.view === "solo") {
+    return { viewer: "solo", token: state.hostToken };
   }
   if (state.view === "board") {
     return { viewer: "board" };
@@ -221,6 +225,31 @@ async function createRoom() {
   }
 }
 
+async function createSoloGame() {
+  try {
+    await ensureBackend();
+    const result = await api("/api/rooms", {
+      method: "POST",
+      body: JSON.stringify({
+        ...state.createDraft,
+        mode: "solo"
+      })
+    });
+    state.view = "solo";
+    state.roomId = result.roomId;
+    state.hostToken = result.hostToken;
+    state.seat = "A";
+    state.token = result.hostToken;
+    state.snapshot = null;
+    state.error = "";
+    saveSession();
+    await fetchSnapshot();
+    connectStream();
+  } catch (error) {
+    setError(error.message);
+  }
+}
+
 async function joinRoom() {
   try {
     await ensureBackend();
@@ -270,6 +299,8 @@ async function sendAction(type, payload = {}) {
           ? { mode: "host", token: state.hostToken }
           : state.view === "player"
             ? { mode: "player", seat: state.seat, token: state.token }
+            : state.view === "solo"
+              ? { mode: "solo", token: state.hostToken }
             : { mode: "board" },
         type,
         payload
@@ -324,6 +355,10 @@ function button(label, action, className = "") {
   return `<button type="button" data-action="${action}" class="${className}">${label}</button>`;
 }
 
+function currentOrigin() {
+  return window.location.origin;
+}
+
 function renderLanding() {
   root.innerHTML = germanize(`
     <section class="hero">
@@ -333,6 +368,7 @@ function renderLanding() {
         <p class="lead">Ein Mehrgeraete-Rollenspiel mit Host-, Board- und Player-Modus. Zwei Lernende spielen verdeckt auf eigenen Endgeraeten, waehrend eine digitale Engine mit Live-Feeds, privaten Zuschriften, Eingriffsereignissen und synchronisierten Phasen den Verlauf laufend veraendert.</p>
         <div class="chip-row">
           <button type="button" class="chip-button" data-action="jump-create">Host-Modus wählen</button>
+          <button type="button" class="chip-button" data-action="jump-solo">Solo-Modus wählen</button>
           <button type="button" class="chip-button" data-action="jump-join">Spieler*in wählen</button>
           <button type="button" class="chip-button" data-action="jump-board">Board wählen</button>
           <button type="button" class="chip-button" data-action="jump-system">Spielprinzip ansehen</button>
@@ -341,12 +377,20 @@ function renderLanding() {
       <div class="hero-actions">
         <div class="meta-list">
           <span class="meta-badge">Server noetig: <code>node server.mjs --host 0.0.0.0 --port 8787</code></span>
-          <span class="meta-badge">Zwei Endgeraete + optionales Board</span>
+          <span class="meta-badge">Solo oder zwei Endgeraete + optionales Board</span>
           <span class="meta-badge">Raumcode + Live-Synchronisierung</span>
           <span class="meta-badge">${BUILD_ID}</span>
           <span class="meta-badge">${state.backendReady === false ? "API nicht erreichbar" : state.backendReady === true ? "API bereit" : "API wird geprüft"}</span>
         </div>
         ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="danger-note">
+        <strong>Wichtig: Diese App läuft nur über <code>http</code>, nicht über <code>https</code>.</strong>
+        <p>Aktuelle Adresse: <a class="linkbox" href="${escapeHtml(currentOrigin())}" target="_blank" rel="noreferrer">${escapeHtml(currentOrigin())}</a></p>
+        <p>Andere Geräte im selben WLAN müssen genau diese Art von Adresse öffnen, also zum Beispiel <code>http://192.168.1.207:8787</code> und nicht <code>https://…</code>.</p>
       </div>
     </section>
 
@@ -392,6 +436,32 @@ function renderLanding() {
           </form>
         </div>
 
+        <div class="mode-card" id="solo-card">
+          <h3>Alleine spielen</h3>
+          <p>Ein einzelnes Geraet startet direkt in die Partie. Du spielst gegen einen Systempartner, der im Hintergrund eigene Fragmente, Deutungen, Doktrinen und Interventionen setzt.</p>
+          <form id="solo-room-form" class="stack">
+            <label class="field">
+              Teamname
+              <input type="text" name="teamName" value="${escapeHtml(state.createDraft.teamName)}" placeholder="z. B. Solo Aletheia">
+            </label>
+            <label class="field">
+              Name
+              <input type="text" name="playerName" value="${escapeHtml(state.createDraft.playerName)}" placeholder="z. B. Mia">
+            </label>
+            <label class="field">
+              Klasse / Kurs
+              <input type="text" name="className" value="${escapeHtml(state.createDraft.className)}" placeholder="z. B. Gym 3A">
+            </label>
+            <label class="field">
+              Runden
+              <select name="roundLimit">
+                ${[4, 5, 6, 7, 8].map((count) => `<option value="${count}" ${Number(state.createDraft.roundLimit) === count ? "selected" : ""}>${count}</option>`).join("")}
+              </select>
+            </label>
+            <button type="submit" class="secondary">Solo-Partie starten</button>
+          </form>
+        </div>
+
         <div class="mode-card" id="join-card">
           <h3>Als Spieler*in beitreten</h3>
           <p>Jedes Endgeraet bekommt eine eigene private Rolle, Inbox und Eingabemaske. Beide Geraete sehen dieselbe gemeinsame Lage, aber unterschiedliche Handlungsauftraege.</p>
@@ -433,7 +503,7 @@ function renderLanding() {
       <div class="section-head">
         <div>
           <h2 class="section-title">Spielprinzip</h2>
-          <p class="subtle">Die Modi sind Host, Spieler*in und Board. Die vier Tags oben sind jetzt Schnellwahl-Buttons und keine blossen Deko-Chips mehr.</p>
+          <p class="subtle">Die Modi sind Host, Solo, Spieler*in und Board. Die Schnellwahl oben springt direkt in den passenden Bereich.</p>
         </div>
       </div>
       <div class="dual-grid">
@@ -444,6 +514,10 @@ function renderLanding() {
         <article class="archive-card">
           <strong>Spieler*in</strong>
           <p>Tritt mit eigenem Geraet bei und bekommt eine private Rolle, Inbox und verdeckte Aktionen.</p>
+        </article>
+        <article class="archive-card">
+          <strong>Solo</strong>
+          <p>Startet direkt gegen einen digitalen Systempartner, der jede Runde mit eigenen verdeckten Zuegen beantwortet.</p>
         </article>
         <article class="archive-card">
           <strong>Board</strong>
@@ -743,6 +817,10 @@ function renderHostPanel() {
         </div>
       </div>
       <div class="stack">
+        <div class="danger-note">
+          <strong>Nur <code>http</code> verwenden.</strong>
+          <p>Wenn andere Geräte beim Öffnen der Links automatisch auf <code>https</code> wechseln, funktioniert die App nicht. Die Basisadresse lautet hier: <code>${escapeHtml(currentOrigin())}</code></p>
+        </div>
         <div class="connection-card">
           <strong>Join-Links</strong>
           <div class="stack" style="margin-top:12px;">
@@ -796,6 +874,35 @@ function renderLiveView() {
         <div class="phase-grid">
           ${renderHostPanel()}
           ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine Systemmeldungen.")} 
+        </div>
+      </div>
+    `;
+  }
+  if (state.view === "solo") {
+    return `
+      <div class="surface">
+        ${renderSharedBoard()}
+        <div class="phase-grid">
+          <div class="surface">
+            ${renderMissionCard()}
+            <section class="panel">
+              <div class="section-head">
+                <div>
+                  <h2 class="section-title">Systempartner</h2>
+                  <p class="subtle">Die Gegenfigur reagiert automatisch im Hintergrund auf deine Zuege und die aktuelle Metriklage.</p>
+                </div>
+              </div>
+              <div class="task-card">
+                <h3>${escapeHtml(state.snapshot.actor?.systemPartner || "Systempartner")}</h3>
+                <p>Du spielst allein, aber nicht ohne Gegenkraft: Die Engine setzt verdeckte Antworten, waehlt Doktrinen mit aus und schreibt eigene Interventionen in die Runde.</p>
+              </div>
+            </section>
+            ${renderPlayerTask()}
+          </div>
+          <div class="surface">
+            ${renderFeed("Private Inbox", state.snapshot.actor?.privateFeed || [], "Noch keine privaten Zuschriften.")}
+            ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine oeffentlichen Meldungen.")}
+          </div>
         </div>
       </div>
     `;
@@ -967,7 +1074,7 @@ function renderConnected() {
   root.innerHTML = germanize(`
     <section class="hero">
       <div>
-        <p class="eyebrow">${state.view === "host" ? "Host-Modus" : state.view === "player" ? `Privatmodus ${escapeHtml(state.seat)}` : "Board-Modus"}</p>
+        <p class="eyebrow">${state.view === "host" ? "Host-Modus" : state.view === "player" ? `Privatmodus ${escapeHtml(state.seat)}` : state.view === "solo" ? "Solo-Modus" : "Board-Modus"}</p>
         <h1 class="title">${escapeHtml(state.snapshot.teamName || "Aletheia")}</h1>
         <p class="lead">${escapeHtml(state.snapshot.className || "Synchronisierte Mehrgeraete-Partie")}</p>
         <div class="chip-row">
@@ -980,6 +1087,7 @@ function renderConnected() {
         <div class="meta-list">
           <span class="meta-badge">Sitz A: ${state.snapshot.seats.A.joined ? escapeHtml(state.snapshot.seats.A.name) : "offen"}</span>
           <span class="meta-badge">Sitz B: ${state.snapshot.seats.B.joined ? escapeHtml(state.snapshot.seats.B.name) : "offen"}</span>
+          ${state.view === "solo" ? `<span class="meta-badge">Systempartner aktiv</span>` : ""}
           <span class="meta-badge">${state.connection === "live" ? "Live synchronisiert" : state.connection === "connecting" ? "Verbindung wird aufgebaut" : "Verbindung instabil"}</span>
         </div>
         <div class="button-row">
@@ -1137,6 +1245,10 @@ document.addEventListener("click", async (event) => {
     jumpToCard("create-card", 'input[name="teamName"]');
     return;
   }
+  if (action === "jump-solo") {
+    jumpToCard("solo-card", 'input[name="playerName"]');
+    return;
+  }
   if (action === "jump-join") {
     jumpToCard("join-card", 'input[name="roomId"]');
     return;
@@ -1194,9 +1306,21 @@ document.addEventListener("submit", async (event) => {
     state.createDraft = {
       teamName: String(data.get("teamName") || ""),
       className: String(data.get("className") || ""),
+      playerName: state.createDraft.playerName,
       roundLimit: Number(data.get("roundLimit") || 6)
     };
     await createRoom();
+    return;
+  }
+  if (form.id === "solo-room-form") {
+    const data = new FormData(form);
+    state.createDraft = {
+      teamName: String(data.get("teamName") || ""),
+      className: String(data.get("className") || ""),
+      playerName: String(data.get("playerName") || ""),
+      roundLimit: Number(data.get("roundLimit") || 6)
+    };
+    await createSoloGame();
     return;
   }
   if (form.id === "join-room-form") {

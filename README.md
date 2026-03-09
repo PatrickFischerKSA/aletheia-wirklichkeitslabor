@@ -10,6 +10,7 @@ Die App ist keine lokale Einzelseite mehr, sondern ein synchronisiertes Klassenz
 
 - lokaler Node-Server mit Raumcodes
 - zwei private Player-Ansichten fuer unterschiedliche Endgeraete
+- zusaetzlicher Solo-Modus mit digitalem Systempartner
 - optionaler Board-/Beamer-Modus fuer die gemeinsame Szene
 - Host-Konsole mit Join-Links und versteckter Engine
 - Live-Feed, private Inboxen, Timer und Systemeingriffe
@@ -27,16 +28,17 @@ node server.mjs --host 0.0.0.0 --port 8787
 Danach:
 
 1. Auf dem Startgeraet `http://localhost:8787` oeffnen.
-2. Einen Raum anlegen.
-3. Die angezeigten Links fuer Spieler*in A, Spieler*in B und optional das Board an die Endgeraete verteilen.
-4. Die beiden Spielenden treten mit ihren eigenen Geraeten bei.
-5. Partie starten.
+2. Entweder einen Mehrgeraete-Raum anlegen oder direkt eine Solo-Partie starten.
+3. Im Mehrgeraete-Modus die angezeigten Links fuer Spieler*in A, Spieler*in B und optional das Board an die Endgeraete verteilen.
+4. Die beiden Spielenden treten mit ihren eigenen Geraeten bei oder die Solo-Partie laeuft sofort gegen den Systempartner an.
+5. Im Mehrgeraete-Modus die Partie starten.
 
 Der Server gibt beim Start auch die LAN-/WLAN-Adressen aus. Genau diese URL muessen die anderen Geraete im selben Netz verwenden.
 
 ## Modi
 
 - `Host`: Raum anlegen, Join-Links kopieren, Systemmotor beobachten
+- `Solo`: eine Person spielt direkt gegen einen digitalen Systempartner mit eigener Gegenlogik
 - `Player`: private Rolle, geheimes Briefing, private Inbox und Aktionsformulare
 - `Board`: gemeinsame Szene, Feed, Metriken, aber keine geheimen Infos
 
