@@ -308,6 +308,19 @@ function renderLanding() {
       </div>
     </section>
 
+    <section class="panel image-stage" aria-label="Byproxy-Bild">
+      <div class="image-stage-media">
+        <img src="./assets/byproxy.jpg" alt="Byproxy im Rollstuhl" class="stage-image">
+      </div>
+      <div class="image-stage-overlay">
+        <div class="image-stage-copy">
+          <p class="eyebrow">Visuelle Leitfigur</p>
+          <h2 class="section-title">Byproxy zwischen Beobachtung, Verletzlichkeit und Deutungsmacht</h2>
+          <p class="subtle">Das Bild ist jetzt bewusst als eigene Bildbühne in die Startseite eingesetzt und nicht mehr nur als kaum sichtbare Hintergrundtextur.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="panel">
       <div class="section-head">
         <div>
