@@ -1121,8 +1121,8 @@ function buildPlayerTask(room, seat) {
       text: room.mode === "solo"
         ? "Die Solo-Partie kann direkt gestartet werden."
         : roomNeedsBothSeats(room)
-          ? "Beide Sitze sind belegt. Die Partie kann jetzt gestartet werden."
-          : "Sobald beide Sitze belegt sind, kann die Partie starten."
+          ? "Beide Sitze sind belegt. Die Partie startet automatisch."
+          : "Sobald beide Sitze belegt sind, startet die Partie automatisch."
     };
   }
   if (room.phase === "finished") {
@@ -1648,6 +1648,9 @@ const server = createServer(async (req, res) => {
       room.seats[seat].token = room.seats[seat].token || randomId(18);
       room.seats[seat].joinedAt = nowIso();
       appendFeed(room, "public", "Endgeraet verbunden", `${room.seats[seat].name} ist auf Sitz ${seat} beigetreten.`, "positive");
+      if (room.mode === "multi" && room.phase === "lobby" && !room.currentRound && roomNeedsBothSeats(room)) {
+        resetGame(room);
+      }
       broadcastRoom(room);
       sendJson(res, 200, {
         roomId: room.id,
