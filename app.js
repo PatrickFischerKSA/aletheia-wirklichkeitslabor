@@ -1,686 +1,264 @@
-const STORAGE_KEY = "aletheia_wirklichkeitslabor_v1";
+const SESSION_KEY = "aletheia_multidevice_session_v1";
+const BUILD_ID = "Multi-Device Build 2026-03-09 11:27";
 
-const AXES = [
-  {
-    id: "wahrheit",
-    short: "Wahrheit",
-    title: "Wahrheit vs. Relativismus",
-    description: "Bernwards Absolutheitsdenken trifft auf Skepsis, Konstruktion und postfaktische Verschiebung."
-  },
-  {
-    id: "aktion",
-    short: "Handlung",
-    title: "Theorie vs. Handlung",
-    description: "Brigitte drueckt auf Eskalation, waehrend Theorie und Reflexion hinterherkommen muessen."
-  },
-  {
-    id: "technik",
-    short: "Technik",
-    title: "Technik vs. Ideologie",
-    description: "Die Chirurgin fragt nach Funktion, nicht nach moralischer Reinheit."
-  },
-  {
-    id: "beobachtung",
-    short: "Beobachtung",
-    title: "Beobachtung vs. Teilnahme",
-    description: "Byproxy steht zwischen Erzaehlen, Manipulation und Zeugenschaft."
-  },
-  {
-    id: "loyalitaet",
-    short: "Loyalitaet",
-    title: "Loyalitaet vs. Selbstschutz",
-    description: "Paul versucht zu vermitteln, ohne dass das Kollektiv in Misstrauen zerfaellt."
-  },
-  {
-    id: "kontrolle",
-    short: "Kontrolle",
-    title: "Institution vs. Freiheit",
-    description: "Frau M., Polizei, Gericht und Regelwerke markieren Macht von aussen."
-  }
-];
-
-const FIGURES = [
-  {
-    id: "byproxy",
-    name: "Byproxy / Petra Bretschneider",
-    role: "Erzaehlerin, Spieleentwicklerin, strategische Beobachterin",
-    mindset: "Analytisch, narrativ sensibel, machtbewusst; will verstehen und zugleich ihre eigene Position sichern.",
-    axis: "beobachtung",
-    function: "Sie macht sichtbar, dass jede Erzaehlung eine Auswahl und damit eine Machtgeste ist.",
-    mission: {
-      title: "Byproxy-Protokoll",
-      goal: "Halte Realitaetsdruck und Ambiguitaet beide zwischen 35 und 70 und erreiche mindestens 16 Enthuellungspunkte.",
-      blindSpot: "Du gewinnst leichter, wenn das Spiel nicht in Eindeutigkeit kippt."
-    }
-  },
-  {
-    id: "paul",
-    name: "Paul",
-    role: "Vermittler, Logistiker, Drucker",
-    mindset: "Loyal, konfliktscheu, stabilisierend; sucht Sicherheit und versucht, Eskalation aufzuhalten.",
-    axis: "loyalitaet",
-    function: "Er ist das fragile Scharnier zwischen Ideologie, Aktion und Alltag.",
-    mission: {
-      title: "Paul-Protokoll",
-      goal: "Beende das Spiel mit mindestens 55 Vertrauen und ohne dass ein Extremwert 80 erreicht.",
-      blindSpot: "Zu viel Schlichtung ohne Klarheit kann als Verdeckung wirken."
-    }
-  },
-  {
-    id: "bernward",
-    name: "Bernward",
-    role: "Ideologischer Kopf der Gruppe",
-    mindset: "Dogmatisch-philosophisch, anti-relativistisch, theoriegetrieben und realitaetsfern.",
-    axis: "wahrheit",
-    function: "Er radikalisiert den Wahrheitsbegriff bis an die Grenze autoritaerer Reinheit.",
-    mission: {
-      title: "Bernward-Protokoll",
-      goal: "Setze mindestens zwei Doktrinen der Familie 'Absolutheit' und halte den Realitaetsdruck am Ende ueber 55.",
-      blindSpot: "Zu viel Reinheit kippt in Zwang und zerstoert das Paarspiel."
-    }
-  },
-  {
-    id: "brigitte",
-    name: "Brigitte",
-    role: "Radikale Aktivistin",
-    mindset: "Impulsiv, militant, handlungsorientiert; verachtet reine Theorie.",
-    axis: "aktion",
-    function: "Sie prueft, ob Wahrheit ohne Risiko nur Pose bleibt.",
-    mission: {
-      title: "Brigitte-Protokoll",
-      goal: "Setze mindestens zwei Doktrinen der Familie 'Aktion' und erreiche in mindestens drei Runden eine richtige Verdachtsmarkierung.",
-      blindSpot: "Aktion ohne Rueckbindung zerlegt Vertrauen."
-    }
-  },
-  {
-    id: "chirurgin",
-    name: "Die Chirurgin",
-    role: "Bombenbauerin und technische Spezialistin",
-    mindset: "Pragmatisch, distanziert, zynisch; denkt in Umsetzbarkeit statt in Reinheit.",
-    axis: "technik",
-    function: "Sie zeigt, wie Technik Verantwortung verschieben kann, ohne neutral zu sein.",
-    mission: {
-      title: "Chirurgin-Protokoll",
-      goal: "Setze mindestens eine Doktrin 'Aktion' und eine 'Nebel'-Doktrin, ohne dass Ambiguitaet ueber 78 steigt.",
-      blindSpot: "Technische Loesungen wirken sauber, verschleiern aber Motive."
-    }
-  },
-  {
-    id: "bayer",
-    name: "Bayer",
-    role: "Anwalt der Gruppe",
-    mindset: "Juristisch-strategisch, narrativ praezise, zynischer Realist.",
-    axis: "kontrolle",
-    function: "Er zeigt, dass Wahrheit vor Gericht immer auch als Geschichte organisiert wird."
-  },
-  {
-    id: "dorothee",
-    name: "Dorothee",
-    role: "Kindheitsfreundin und Aussenperspektive",
-    mindset: "Vorsichtig, konventionell, moralisch stabil; Gegenpol zur Gruppe.",
-    axis: "loyalitaet",
-    function: "Sie bringt Ethik und Alltag gegen die geschlossene Logik des Kollektivs in Stellung."
-  },
-  {
-    id: "omar",
-    name: "Omar Haj'Yahia",
-    role: "Mitbewohner in der betreuten Einrichtung",
-    mindset: "Nebenfigur mit institutioneller Sprengkraft; loest Konflikte mit Polizei und Ordnung aus.",
-    axis: "kontrolle",
-    function: "Er macht deutlich, wie schnell Institutionen Fremdheit, Koerper und Macht verknuepfen."
-  },
-  {
-    id: "frau_m",
-    name: "Frau M.",
-    role: "Aufseherin im betreuten Wohnen",
-    mindset: "Autoritaer, kontrollorientiert, kleinbuergerlich, ordnungsliebend.",
-    axis: "kontrolle",
-    function: "Sie verkoerpert die alltgliche Form institutioneller Macht."
-  }
-];
-
-const CORE_FIGURE_IDS = ["byproxy", "paul", "bernward", "brigitte", "chirurgin"];
-
-const EVENTS = [
-  {
-    id: "manifestkeller",
-    title: "Manifest im Keller",
-    teaser: "Die Gruppe feilt an der Behauptung, dass nur absolute Wahrheit die Gesellschaft retten kann.",
-    stakes: "Wenn die Sprache kippt, kippt auch der politische Horizont.",
-    tags: ["wahrheit", "dogma", "balance"],
-    figures: ["bernward", "byproxy", "paul"],
-    shift: { druck: 6, ambig: -2, vertrauen: -2 }
-  },
-  {
-    id: "buecherbarriere",
-    title: "Buecherbarriere",
-    teaser: "Alltag, Koerper und Theorie kollidieren in einem Raum, der fuer manche passierbar und fuer andere blockiert ist.",
-    stakes: "Das Setting zeigt, dass Deutung nie unabhaengig von Koerpern und Infrastruktur ist.",
-    tags: ["beobachtung", "loyalitaet", "bruch"],
-    figures: ["byproxy", "paul", "frau_m"],
-    shift: { druck: 1, ambig: 3, vertrauen: -5 }
-  },
-  {
-    id: "druckerei",
-    title: "Flugblattmaschine",
-    teaser: "Texte werden vervielfaeltigt, waehrend gleichzeitig unklar bleibt, ob Aufklaerung oder Propaganda produziert wird.",
-    stakes: "Mediale Formen tragen Wahrheit nicht nur, sie verformen sie auch.",
-    tags: ["aktion", "wahrheit", "nebel"],
-    figures: ["paul", "bernward", "brigitte"],
-    shift: { druck: 4, ambig: 4, vertrauen: -1 }
-  },
-  {
-    id: "bombenlogik",
-    title: "Bombenlogik",
-    teaser: "Technische Umsetzbarkeit tritt an die Stelle der moralischen Frage.",
-    stakes: "Was geschieht, wenn Funktionalitaet den Sinn ersetzt?",
-    tags: ["technik", "aktion", "dogma"],
-    figures: ["chirurgin", "brigitte", "bernward"],
-    shift: { druck: 7, ambig: 1, vertrauen: -4 }
-  },
-  {
-    id: "kindheitsblick",
-    title: "Dorothees Gegenblick",
-    teaser: "Eine Aussenfigur stellt der Gruppe die Frage, ob ihre Wahrheitsrede nicht nur neue Gewalt maskiert.",
-    stakes: "Die Gruppe wird von ausserhalb moralisch gespiegelt.",
-    tags: ["loyalitaet", "beobachtung", "balance"],
-    figures: ["dorothee", "byproxy", "paul"],
-    shift: { druck: -2, ambig: 2, vertrauen: 4 }
-  },
-  {
-    id: "institution",
-    title: "Institutioneller Zugriff",
-    teaser: "Regeln, Koerperkontrolle und Polizei rutschen in den Vordergrund.",
-    stakes: "Die Frage lautet nicht nur, was wahr ist, sondern wer definieren darf, was gilt.",
-    tags: ["kontrolle", "bruch", "dogma"],
-    figures: ["frau_m", "omar", "bayer"],
-    shift: { druck: 4, ambig: 2, vertrauen: -3 }
-  },
-  {
-    id: "gerichtsprobe",
-    title: "Gericht und Narrativ",
-    teaser: "Bayer ordnet die Ereignisse in ein rhetorisch kontrolliertes Verteidigungsnarrativ.",
-    stakes: "Juristische Wahrheit ist Form, Auswahl und Strategie zugleich.",
-    tags: ["kontrolle", "beobachtung", "nebel"],
-    figures: ["bayer", "byproxy", "bernward"],
-    shift: { druck: 1, ambig: 5, vertrauen: -1 }
-  },
-  {
-    id: "posttruthfeed",
-    title: "Paralleler Feed",
-    teaser: "Geruechte, Gegenwahrheiten und alternative Fakten diffundieren in alle Richtungen.",
-    stakes: "Zu viel Relativierung zerfrisst Handlungsfaehigkeit.",
-    tags: ["wahrheit", "nebel", "bruch"],
-    figures: ["bernward", "byproxy", "bayer"],
-    shift: { druck: -3, ambig: 7, vertrauen: -3 }
-  },
-  {
-    id: "teilnahme",
-    title: "Erzaehlte Teilnahme",
-    teaser: "Byproxy muss entscheiden, ob sie Beobachterin bleiben oder aktiv in die Dynamik eingreifen will.",
-    stakes: "Zeugenschaft wird zur Handlung.",
-    tags: ["beobachtung", "aktion", "balance"],
-    figures: ["byproxy", "brigitte", "paul"],
-    shift: { druck: 2, ambig: 3, vertrauen: 1 }
-  },
-  {
-    id: "spaltung",
-    title: "Spaltung im Kollektiv",
-    teaser: "Jede Figur beansprucht fuer sich, die eigentliche Rettungsidee zu verkoerpern.",
-    stakes: "Aletheia droht an ihren eigenen Rollen zu zerbrechen.",
-    tags: ["loyalitaet", "aktion", "bruch"],
-    figures: ["bernward", "brigitte", "paul", "chirurgin"],
-    shift: { druck: 3, ambig: 3, vertrauen: -7 }
-  }
-];
-
-const FRAGMENTS = [
-  {
-    id: "f1",
-    title: "Der Spiegel mit Haarriss",
-    text: "Eine Wahrheit spiegelt alles, aber jeder Riss erzeugt eine zweite Lesart.",
-    axes: ["wahrheit", "beobachtung"],
-    figures: ["bernward", "byproxy"],
-    effect: { druck: 3, ambig: 1, vertrauen: 0, revelation: 2 }
-  },
-  {
-    id: "f2",
-    title: "Der Rollweg zwischen Buechern",
-    text: "Ein Raum behauptet Neutralitaet und offenbart im gleichen Augenblick seine Ausschluesse.",
-    axes: ["beobachtung", "kontrolle"],
-    figures: ["byproxy", "frau_m"],
-    effect: { druck: 1, ambig: 2, vertrauen: -1, revelation: 2 }
-  },
-  {
-    id: "f3",
-    title: "Die matte Druckerschwaerze",
-    text: "Was gedruckt ist, sieht endgueltig aus, auch wenn es nur beschleunigter Zweifel ist.",
-    axes: ["wahrheit", "aktion"],
-    figures: ["paul", "bernward"],
-    effect: { druck: 2, ambig: 3, vertrauen: 0, revelation: 1 }
-  },
-  {
-    id: "f4",
-    title: "Das kalte Werkzeug",
-    text: "Eine technische Loesung entlastet nie ganz von Verantwortung.",
-    axes: ["technik", "aktion"],
-    figures: ["chirurgin", "brigitte"],
-    effect: { druck: 3, ambig: 0, vertrauen: -1, revelation: 1 }
-  },
-  {
-    id: "f5",
-    title: "Die ausweichende Hand",
-    text: "Jemand vermittelt so lange, bis niemand mehr weiss, wer begonnen hat.",
-    axes: ["loyalitaet", "beobachtung"],
-    figures: ["paul", "byproxy"],
-    effect: { druck: -1, ambig: 2, vertrauen: 3, revelation: 0 }
-  },
-  {
-    id: "f6",
-    title: "Das Banner ohne Boden",
-    text: "Ein grosser Begriff haengt ueber allen und beruehrt doch nirgends den Alltag.",
-    axes: ["wahrheit", "aktion"],
-    figures: ["bernward", "brigitte"],
-    effect: { druck: 4, ambig: 1, vertrauen: -1, revelation: 1 }
-  },
-  {
-    id: "f7",
-    title: "Das Tribunal aus Fluesterstimmen",
-    text: "Nicht das Urteil ist gefaehrlich, sondern die Vorentscheidung im Hintergrund.",
-    axes: ["kontrolle", "beobachtung"],
-    figures: ["bayer", "frau_m"],
-    effect: { druck: 2, ambig: 2, vertrauen: -1, revelation: 2 }
-  },
-  {
-    id: "f8",
-    title: "Die Salzspur",
-    text: "Eine Erinnerung stellt die Frage, ob spaetere Ideologien nur fruehere Wunden verkleiden.",
-    axes: ["beobachtung", "loyalitaet"],
-    figures: ["byproxy", "dorothee"],
-    effect: { druck: -2, ambig: 2, vertrauen: 2, revelation: 1 }
-  },
-  {
-    id: "f9",
-    title: "Der Gehoerschutz",
-    text: "Wer nichts hoeren will, kann behaupten, er habe nur gehandelt.",
-    axes: ["technik", "kontrolle"],
-    figures: ["chirurgin", "frau_m"],
-    effect: { druck: 2, ambig: 1, vertrauen: -2, revelation: 1 }
-  },
-  {
-    id: "f10",
-    title: "Die Nebenfigur im Protokoll",
-    text: "Erst wenn eine Institution reagiert, merkt man, wer bisher nie gemeint war.",
-    axes: ["kontrolle", "loyalitaet"],
-    figures: ["omar", "frau_m"],
-    effect: { druck: 1, ambig: 2, vertrauen: -1, revelation: 2 }
-  },
-  {
-    id: "f11",
-    title: "Das perfekte Verteidigungsnarrativ",
-    text: "Eine plausible Geschichte kann zugleich Schutz und Verformung sein.",
-    axes: ["kontrolle", "wahrheit"],
-    figures: ["bayer", "bernward"],
-    effect: { druck: 1, ambig: 3, vertrauen: 0, revelation: 2 }
-  },
-  {
-    id: "f12",
-    title: "Die abrufbare Pose",
-    text: "Militanz hat ein Tempo, das Nachdenken selten mitgehen kann.",
-    axes: ["aktion", "loyalitaet"],
-    figures: ["brigitte", "paul"],
-    effect: { druck: 3, ambig: 0, vertrauen: -3, revelation: 0 }
-  },
-  {
-    id: "f13",
-    title: "Die kontrollierte Rampe",
-    text: "Barrierefreiheit kann als Hilfe erscheinen und zugleich als Regime auftreten.",
-    axes: ["kontrolle", "beobachtung"],
-    figures: ["frau_m", "byproxy"],
-    effect: { druck: 1, ambig: 1, vertrauen: -1, revelation: 2 }
-  },
-  {
-    id: "f14",
-    title: "Die weisse Handschuhlogik",
-    text: "Saubere Technik ist oft nur die elegante Sprache fuer schmutzige Entscheidungen.",
-    axes: ["technik", "wahrheit"],
-    figures: ["chirurgin", "bernward"],
-    effect: { druck: 3, ambig: -1, vertrauen: -1, revelation: 1 }
-  },
-  {
-    id: "f15",
-    title: "Der Restzweifel",
-    text: "Eine kleine Unsicherheit kann die einzige Rettung vor totaler Sicherheit sein.",
-    axes: ["wahrheit", "loyalitaet"],
-    figures: ["dorothee", "paul"],
-    effect: { druck: -2, ambig: 2, vertrauen: 2, revelation: 1 }
-  },
-  {
-    id: "f16",
-    title: "Die beobachtende Kamera",
-    text: "Wer dokumentiert, entscheidet, was spaeter als wirklich gilt.",
-    axes: ["beobachtung", "wahrheit"],
-    figures: ["byproxy", "bayer"],
-    effect: { druck: 1, ambig: 2, vertrauen: 1, revelation: 2 }
-  },
-  {
-    id: "f17",
-    title: "Der stille Helfer",
-    text: "Loyalitaet bleibt unsichtbar, bis sie im entscheidenden Moment fehlt.",
-    axes: ["loyalitaet", "aktion"],
-    figures: ["paul", "brigitte"],
-    effect: { druck: 0, ambig: 0, vertrauen: 3, revelation: 1 }
-  },
-  {
-    id: "f18",
-    title: "Die versiegelte Kiste",
-    text: "Wenn niemand mehr nach dem Inhalt fragt, wird das Verfahren selbst zur Wahrheit.",
-    axes: ["technik", "kontrolle"],
-    figures: ["chirurgin", "bayer"],
-    effect: { druck: 2, ambig: 1, vertrauen: -1, revelation: 2 }
-  },
-  {
-    id: "f19",
-    title: "Das Gegenmeer",
-    text: "Eine private Erinnerung widerspricht der politischen Pose und verunsichert sie gerade deshalb.",
-    axes: ["beobachtung", "loyalitaet"],
-    figures: ["dorothee", "byproxy"],
-    effect: { druck: -1, ambig: 1, vertrauen: 2, revelation: 1 }
-  },
-  {
-    id: "f20",
-    title: "Die blinde Restgruppe",
-    text: "Nicht alle werden in den grossen Wahrheitsbegriffen gleich sichtbar.",
-    axes: ["kontrolle", "wahrheit"],
-    figures: ["omar", "bernward"],
-    effect: { druck: 1, ambig: 2, vertrauen: -2, revelation: 2 }
-  }
-];
-
-const DOCTRINE_CARDS = [
-  {
-    id: "d1",
-    family: "absolut",
-    title: "Manifest der Eindeutigkeit",
-    text: "Mehr Wahrheit durch haertere Begriffe und klarere Fronten.",
-    publicEffect: { druck: 8, ambig: -4, vertrauen: -2, revelation: 1 },
-    shadowEffect: { druck: 3, ambig: 0, vertrauen: -1, revelation: 0 }
-  },
-  {
-    id: "d2",
-    family: "absolut",
-    title: "Saeuberung der Mehrdeutigkeit",
-    text: "Widerspruch wird als Gefahr gelesen, nicht als Erkenntnischance.",
-    publicEffect: { druck: 7, ambig: -3, vertrauen: -3, revelation: 0 },
-    shadowEffect: { druck: 2, ambig: -1, vertrauen: -1, revelation: 0 }
-  },
-  {
-    id: "d3",
-    family: "absolut",
-    title: "Autoritaet des Begriffs",
-    text: "Wer die Definition kontrolliert, kontrolliert auch die Wirklichkeit.",
-    publicEffect: { druck: 6, ambig: -2, vertrauen: -2, revelation: 1 },
-    shadowEffect: { druck: 2, ambig: 0, vertrauen: 0, revelation: 0 }
-  },
-  {
-    id: "d4",
-    family: "nebel",
-    title: "Strategische Luege",
-    text: "Eine zweckmaessige Verzerrung soll das groessere Ziel retten.",
-    publicEffect: { druck: -1, ambig: 9, vertrauen: -5, revelation: 0 },
-    shadowEffect: { druck: 0, ambig: 4, vertrauen: -2, revelation: 0 }
-  },
-  {
-    id: "d5",
-    family: "nebel",
-    title: "Paralleler Feed",
-    text: "Viele Versionen gleichzeitig untergraben jede feste Bezugsflaeche.",
-    publicEffect: { druck: -2, ambig: 8, vertrauen: -4, revelation: 0 },
-    shadowEffect: { druck: 0, ambig: 3, vertrauen: -1, revelation: 0 }
-  },
-  {
-    id: "d6",
-    family: "nebel",
-    title: "Maskierte Zeugenschaft",
-    text: "Beobachtung wird als Deckmantel fuer verdeckte Intervention benutzt.",
-    publicEffect: { druck: 0, ambig: 7, vertrauen: -3, revelation: 1 },
-    shadowEffect: { druck: 1, ambig: 3, vertrauen: -1, revelation: 0 }
-  },
-  {
-    id: "d7",
-    family: "vermittlung",
-    title: "Pauls Aufschub",
-    text: "Tempo wird gedrosselt, damit Beziehung vor Eskalation geschuetzt bleibt.",
-    publicEffect: { druck: -4, ambig: 1, vertrauen: 8, revelation: 1 },
-    shadowEffect: { druck: -1, ambig: 0, vertrauen: 3, revelation: 0 }
-  },
-  {
-    id: "d8",
-    family: "vermittlung",
-    title: "Dorothees Gegenfrage",
-    text: "Die moralische Aussenperspektive zwingt das Kollektiv zur Selbstpruefung.",
-    publicEffect: { druck: -3, ambig: 2, vertrauen: 7, revelation: 2 },
-    shadowEffect: { druck: -1, ambig: 1, vertrauen: 2, revelation: 0 }
-  },
-  {
-    id: "d9",
-    family: "vermittlung",
-    title: "Fuersorge vor Reinheit",
-    text: "Koerper und Beziehungen zaehlen mehr als begriffliche Sauberkeit.",
-    publicEffect: { druck: -5, ambig: 0, vertrauen: 9, revelation: 0 },
-    shadowEffect: { druck: -1, ambig: 0, vertrauen: 3, revelation: 0 }
-  },
-  {
-    id: "d10",
-    family: "aktion",
-    title: "Brigittes Eskalation",
-    text: "Handeln soll den Begriffsraum ueberholen.",
-    publicEffect: { druck: 5, ambig: 1, vertrauen: -4, revelation: 2 },
-    shadowEffect: { druck: 2, ambig: 0, vertrauen: -2, revelation: 0 }
-  },
-  {
-    id: "d11",
-    family: "aktion",
-    title: "Chirurgische Loesung",
-    text: "Eine technische Intervention verspricht Praezision, verengt aber den Blick.",
-    publicEffect: { druck: 4, ambig: -1, vertrauen: -2, revelation: 1 },
-    shadowEffect: { druck: 1, ambig: 0, vertrauen: -1, revelation: 0 }
-  },
-  {
-    id: "d12",
-    family: "aktion",
-    title: "Bayers Narrativschub",
-    text: "Das Ereignis wird sofort in eine vernuenftige Form gegossen.",
-    publicEffect: { druck: 2, ambig: 3, vertrauen: -1, revelation: 2 },
-    shadowEffect: { druck: 1, ambig: 1, vertrauen: 0, revelation: 0 }
-  }
-];
-
-const REFLECTION_PROMPTS = [
-  "Wann wird in dieser Runde Wahrheit als Machtinstrument sichtbar?",
-  "Welche Figur oder Haltung hat das Geschehen am staerksten geformt und warum?",
-  "Wo kippt Vermittlung in Verdeckung und wo kippt Radikalitaet in Leere?",
-  "Welche Rolle spielt der Koerper fuer die Frage, was als wirklich gilt?",
-  "Wie unterscheidet sich technische Funktionalitaet von moralischer Verantwortung?",
-  "Wann hilft Mehrdeutigkeit, wann zerstoert sie Orientierung?",
-  "Welche Erzaehlentscheidung waere in dieser Runde selbst schon eine Form von Gewalt?",
-  "Wie veraendert der institutionelle Blick die Gruppe Aletheia?"
-];
-
-const SYSTEM_OVERVIEW = [
-  {
-    title: "1. Nachtlogik",
-    text: "Vor jeder Runde waehlt die App ein Szenendossier, einen Schattenakteur und verdeckte Werteverschiebungen. Die Lernenden sehen nur die Symptome, nicht die ganze Formel."
-  },
-  {
-    title: "2. Fragmentphase",
-    text: "Beide Spieler*innen waehlen aus mehrdeutigen Textfragmenten und geben ein kurzes Deutungswort dazu. Das ist der Dixit-Anteil: Bedeutung wird indirekt ausgehandelt."
-  },
-  {
-    title: "3. Doktrinphase",
-    text: "Spieler*in A verwirft eine von drei Doktrinkarten, Spieler*in B setzt eine der beiden verbleibenden. Das ueberzaehlige Gesetz wirkt verdeckt nach. Das ist der Secret-Hitler-Anteil."
-  },
-  {
-    title: "4. Verdachtsphase",
-    text: "Beide markieren getrennt, wer die Runde aus dem Schatten bestimmt hat und welcher Haltung sie in dieser Situation vertrauen. Das ist der Werewolf-Anteil."
-  },
-  {
-    title: "5. Reflexionsphase",
-    text: "Jede Runde endet mit einer kurzen Interpretationsnotiz. So wird Spielen direkt zu literarischer Begriffsarbeit."
-  }
-];
-
-const DOCTRINE_OVERVIEW = [
-  {
-    title: "Absolutheit",
-    text: "Erhoeht Realitaetsdruck, senkt Ambiguitaet und lockt autoritaere Klarheit an."
-  },
-  {
-    title: "Nebel",
-    text: "Erhoeht Ambiguitaet und unterminiert Vertrauen. Die Welt wird interpretierbar, aber instabil."
-  },
-  {
-    title: "Vermittlung",
-    text: "Stabilisiert Vertrauen und schafft Luft fuer genauere Beobachtung."
-  },
-  {
-    title: "Aktion",
-    text: "Erhoeht Tempo und Konfliktdichte. Manche Wahrheiten werden dadurch sichtbar, andere ueberrannt."
-  }
-];
-
-const TEACHER_FLOW = [
-  {
-    title: "Vorbereitung (5 Minuten)",
-    text: "Kurz die Figurenrollen und die sechs Interpretationsachsen sichern. Danach erst das Spiel freigeben."
-  },
-  {
-    title: "Spielphase I (20-25 Minuten)",
-    text: "Runden 1-3 spielen. Danach Zwischenstopp: Welche Doktrinfamilie dominiert? Welche Figur ist im Paar lauter als die anderen?"
-  },
-  {
-    title: "Spielphase II (20-25 Minuten)",
-    text: "Runden 4-6 oder bis zum Kollaps. Das Paar muss am Ende ein Urteil zur Frage formulieren, ob Aletheia Wahrheit rettet oder zerstueckelt."
-  },
-  {
-    title: "Auswertung (15 Minuten)",
-    text: "Protokolle vergleichen: Welche Paare kippten in autoritaere Wahrheit, welche in Simulationsnebel, welche hielten Ambivalenz aus?"
-  }
-];
-
-const TEACHER_EVAL = [
-  {
-    title: "Analytischer Fokus",
-    text: "Nicht fragen 'Wer hat gewonnen?', sondern: Welche Entscheidungen haben den Wahrheitsbegriff verengt, erweitert oder deformiert?"
-  },
-  {
-    title: "Transferfrage",
-    text: "Welche Figur repraesentiert fuer euch die groesste Gefahr: Dogma, Radikalitaet, Technik, Vermittlung oder Erzahldominanz?"
-  },
-  {
-    title: "Differenzierung",
-    text: "Leistungsstarke Paare muessen ihr Endurteil mit mindestens drei Figuren und zwei Achsen begruenden. Schwierigere Lerngruppen koennen mit nur vier Runden spielen."
-  },
-  {
-    title: "Leistungsprodukt",
-    text: "Das exportierte Markdown kann als Spielbericht, Interpretationsjournal oder Grundlage fuer eine muendliche Auswertung dienen."
-  }
-];
-
-const FAMILY_LABELS = {
-  absolut: "Absolutheit",
-  nebel: "Nebel",
-  vermittlung: "Vermittlung",
-  aktion: "Aktion"
+const state = {
+  view: "landing",
+  roomId: "",
+  seat: "",
+  token: "",
+  hostToken: "",
+  snapshot: null,
+  stream: null,
+  connection: "idle",
+  uiTab: "live",
+  joinDraft: {
+    roomId: "",
+    seat: "A",
+    name: ""
+  },
+  createDraft: {
+    teamName: "",
+    className: "",
+    roundLimit: 6
+  },
+  error: ""
 };
 
-function defaultState() {
-  return {
-    ui: { activeTab: "spiel" },
-    meta: {
-      teamName: "",
-      className: "",
-      playerA: "",
-      playerB: ""
+const root = document.getElementById("app");
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) {
+      return;
+    }
+    const saved = JSON.parse(raw);
+    Object.assign(state, {
+      view: saved.view || state.view,
+      roomId: saved.roomId || "",
+      seat: saved.seat || "",
+      token: saved.token || "",
+      hostToken: saved.hostToken || "",
+      uiTab: saved.uiTab || "live",
+      createDraft: { ...state.createDraft, ...(saved.createDraft || {}) },
+      joinDraft: { ...state.joinDraft, ...(saved.joinDraft || {}) }
+    });
+  } catch {
+    localStorage.removeItem(SESSION_KEY);
+  }
+}
+
+function saveSession() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    view: state.view,
+    roomId: state.roomId,
+    seat: state.seat,
+    token: state.token,
+    hostToken: state.hostToken,
+    uiTab: state.uiTab,
+    createDraft: state.createDraft,
+    joinDraft: state.joinDraft
+  }));
+}
+
+function applyUrlHints() {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
+  const room = params.get("room");
+  const seat = params.get("seat");
+  if (room) {
+    state.roomId = room.toUpperCase();
+    state.joinDraft.roomId = state.roomId;
+  }
+  if (seat === "A" || seat === "B") {
+    state.seat = seat;
+    state.joinDraft.seat = seat;
+  }
+  if (mode === "player" || mode === "board" || mode === "host") {
+    state.view = mode;
+  }
+}
+
+function setError(message) {
+  state.error = message;
+  render();
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    headers: {
+      "Content-Type": "application/json"
     },
-    round: 0,
-    maxRounds: 6,
-    started: false,
-    finished: false,
-    metrics: {
-      druck: 42,
-      ambig: 36,
-      vertrauen: 58,
-      revelation: 0
-    },
-    tracks: {
-      absolut: 0,
-      nebel: 0,
-      vermittlung: 0,
-      aktion: 0
-    },
-    secretMissions: {
-      a: null,
-      b: null
-    },
-    stats: {
-      correctGuesses: 0,
-      correctSuspicion: 0,
-      enactedFamilies: [],
-      roundsCollapsed: 0
-    },
-    current: null,
-    history: [],
-    outcome: null
+    ...options
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Unbekannter Serverfehler");
+  }
+  return data;
+}
+
+function viewerParams() {
+  if (state.view === "host") {
+    return { viewer: "host", token: state.hostToken };
+  }
+  if (state.view === "player") {
+    return { viewer: "player", seat: state.seat, token: state.token };
+  }
+  if (state.view === "board") {
+    return { viewer: "board" };
+  }
+  return { viewer: "board" };
+}
+
+function queryString(params) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      search.set(key, value);
+    }
+  });
+  return search.toString();
+}
+
+async function fetchSnapshot() {
+  if (!state.roomId || state.view === "landing") {
+    return;
+  }
+  try {
+    const query = queryString(viewerParams());
+    state.snapshot = await api(`/api/rooms/${state.roomId}?${query}`, {
+      method: "GET",
+      headers: {}
+    });
+    state.connection = "live";
+    state.error = "";
+    render();
+  } catch (error) {
+    state.connection = "offline";
+    state.error = error.message;
+    render();
+  }
+}
+
+function closeStream() {
+  if (state.stream) {
+    state.stream.close();
+    state.stream = null;
+  }
+}
+
+function connectStream() {
+  closeStream();
+  if (!state.roomId || state.view === "landing") {
+    return;
+  }
+  const query = queryString(viewerParams());
+  state.stream = new EventSource(`/api/rooms/${state.roomId}/stream?${query}`);
+  state.connection = "connecting";
+  state.stream.onmessage = (event) => {
+    state.snapshot = JSON.parse(event.data);
+    state.connection = "live";
+    state.error = "";
+    render();
+  };
+  state.stream.onerror = () => {
+    state.connection = "offline";
+    renderConnectionOnly();
   };
 }
 
-let state = loadState();
-
-function loadState() {
+async function createRoom() {
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      return defaultState();
-    }
-    const parsed = JSON.parse(saved);
-    return {
-      ...defaultState(),
-      ...parsed,
-      ui: { ...defaultState().ui, ...(parsed.ui || {}) },
-      meta: { ...defaultState().meta, ...(parsed.meta || {}) },
-      metrics: { ...defaultState().metrics, ...(parsed.metrics || {}) },
-      tracks: { ...defaultState().tracks, ...(parsed.tracks || {}) },
-      stats: { ...defaultState().stats, ...(parsed.stats || {}) }
-    };
+    const result = await api("/api/rooms", {
+      method: "POST",
+      body: JSON.stringify(state.createDraft)
+    });
+    state.view = "host";
+    state.roomId = result.roomId;
+    state.hostToken = result.hostToken;
+    state.snapshot = null;
+    state.error = "";
+    saveSession();
+    await fetchSnapshot();
+    connectStream();
   } catch (error) {
-    console.warn("State reset after parse failure", error);
-    return defaultState();
+    setError(error.message);
   }
 }
 
-function saveState() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+async function joinRoom() {
+  try {
+    const result = await api(`/api/rooms/${state.joinDraft.roomId.toUpperCase()}/join`, {
+      method: "POST",
+      body: JSON.stringify({
+        seat: state.joinDraft.seat,
+        name: state.joinDraft.name
+      })
+    });
+    state.view = "player";
+    state.roomId = result.roomId;
+    state.seat = result.seat;
+    state.token = result.token;
+    state.joinDraft.roomId = result.roomId;
+    state.snapshot = null;
+    state.error = "";
+    saveSession();
+    await fetchSnapshot();
+    connectStream();
+  } catch (error) {
+    setError(error.message);
+  }
 }
 
-function figureById(id) {
-  return FIGURES.find((figure) => figure.id === id);
+async function openBoard() {
+  state.view = "board";
+  state.roomId = state.joinDraft.roomId.toUpperCase();
+  state.error = "";
+  saveSession();
+  await fetchSnapshot();
+  connectStream();
 }
 
-function eventById(id) {
-  return EVENTS.find((entry) => entry.id === id);
+async function sendAction(type, payload = {}) {
+  try {
+    await api(`/api/rooms/${state.roomId}/action`, {
+      method: "POST",
+      body: JSON.stringify({
+        viewer: state.view === "host"
+          ? { mode: "host", token: state.hostToken }
+          : state.view === "player"
+            ? { mode: "player", seat: state.seat, token: state.token }
+            : { mode: "board" },
+        type,
+        payload
+      })
+    });
+  } catch (error) {
+    setError(error.message);
+  }
 }
 
-function fragmentById(id) {
-  return FRAGMENTS.find((entry) => entry.id === id);
+function formatTime(isoString) {
+  if (!isoString) {
+    return "";
+  }
+  const date = new Date(isoString);
+  return date.toLocaleTimeString("de-CH", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
-function doctrineById(id) {
-  return DOCTRINE_CARDS.find((entry) => entry.id === id);
-}
-
-function axisById(id) {
-  return AXES.find((axis) => axis.id === id);
+function deadlineText(deadline) {
+  if (!deadline) {
+    return "ohne Timer";
+  }
+  const diff = Math.max(0, deadline - Date.now());
+  const seconds = Math.ceil(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
 function escapeHtml(value) {
@@ -691,1149 +269,884 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
-function clamp(value, min = 0, max = 100) {
-  return Math.max(min, Math.min(max, value));
+function button(label, action, className = "") {
+  return `<button type="button" data-action="${action}" class="${className}">${label}</button>`;
 }
 
-function shuffle(list) {
-  const copy = [...list];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
-  }
-  return copy;
+function renderLanding() {
+  root.innerHTML = `
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Synchronisierte Lernlandschaft fuer "Die echtere Wirklichkeit"</p>
+        <h1 class="title">Aletheia Wirklichkeitslabor</h1>
+        <p class="lead">Ein Mehrgeraete-Rollenspiel mit Host-, Board- und Player-Modus. Zwei Lernende spielen verdeckt auf eigenen Endgeraeten, waehrend eine digitale Engine mit Live-Feeds, privaten Zuschriften, Eingriffsereignissen und synchronisierten Phasen den Verlauf laufend veraendert.</p>
+        <div class="chip-row">
+          <span class="chip">Werwolf: Verdacht</span>
+          <span class="chip">Secret Hitler: Doktrindeck</span>
+          <span class="chip">Dixit: metaphorische Deutung</span>
+          <span class="chip">Mehrgeraete-Sync</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="meta-list">
+          <span class="meta-badge">Server noetig: <code>node server.mjs --host 0.0.0.0 --port 8787</code></span>
+          <span class="meta-badge">Zwei Endgeraete + optionales Board</span>
+          <span class="meta-badge">Raumcode + Live-Synchronisierung</span>
+          <span class="meta-badge">${BUILD_ID}</span>
+        </div>
+        ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Zugang waehlen</h2>
+          <p class="subtle">Ein Raum wird einmal angelegt und danach ueber einen Raumcode oder direkte Links betreten.</p>
+        </div>
+      </div>
+      <div class="mode-grid">
+        <div class="mode-card">
+          <h3>Spielraum anlegen</h3>
+          <p>Ein Geraet startet den Raum und erhaelt Host-Rechte. Danach koennen Join-Links fuer Spieler*in A, Spieler*in B und Board verteilt werden.</p>
+          <form id="create-room-form" class="stack">
+            <label class="field">
+              Teamname
+              <input type="text" name="teamName" value="${escapeHtml(state.createDraft.teamName)}" placeholder="z. B. Gruppe Aletheia 3A">
+            </label>
+            <label class="field">
+              Klasse / Kurs
+              <input type="text" name="className" value="${escapeHtml(state.createDraft.className)}" placeholder="z. B. Gym 3A">
+            </label>
+            <label class="field">
+              Runden
+              <select name="roundLimit">
+                ${[4, 5, 6, 7, 8].map((count) => `<option value="${count}" ${Number(state.createDraft.roundLimit) === count ? "selected" : ""}>${count}</option>`).join("")}
+              </select>
+            </label>
+            <button type="submit">Raum anlegen</button>
+          </form>
+        </div>
+
+        <div class="mode-card">
+          <h3>Als Spieler*in beitreten</h3>
+          <p>Jedes Endgeraet bekommt eine eigene private Rolle, Inbox und Eingabemaske. Beide Geraete sehen dieselbe gemeinsame Lage, aber unterschiedliche Handlungsauftraege.</p>
+          <form id="join-room-form" class="stack">
+            <label class="field">
+              Raumcode
+              <input type="text" name="roomId" value="${escapeHtml(state.joinDraft.roomId)}" placeholder="z. B. A7KQ3">
+            </label>
+            <label class="field">
+              Sitz
+              <select name="seat">
+                <option value="A" ${state.joinDraft.seat === "A" ? "selected" : ""}>Spieler*in A</option>
+                <option value="B" ${state.joinDraft.seat === "B" ? "selected" : ""}>Spieler*in B</option>
+              </select>
+            </label>
+            <label class="field">
+              Name
+              <input type="text" name="name" value="${escapeHtml(state.joinDraft.name)}" placeholder="Name auf diesem Geraet">
+            </label>
+            <button type="submit" class="secondary">Als Spieler*in beitreten</button>
+          </form>
+        </div>
+
+        <div class="mode-card">
+          <h3>Board / Beamer oeffnen</h3>
+          <p>Der Board-Modus zeigt die gemeinsame Szene, Metriken und den oeffentlichen Feed, aber keine privaten Rollen oder geheimen Karten.</p>
+          <form id="board-room-form" class="stack">
+            <label class="field">
+              Raumcode
+              <input type="text" name="roomId" value="${escapeHtml(state.joinDraft.roomId)}" placeholder="z. B. A7KQ3">
+            </label>
+            <button type="submit" class="ghost">Board verbinden</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">${BUILD_ID} | Wenn ein Endgeraet die URL des Host-Geraets im selben WLAN oeffnet, wird die Partie live synchronisiert.</p>
+  `;
 }
 
-function sample(list, count = 1) {
-  return shuffle(list).slice(0, count);
-}
-
-function weightedChoice(weighted) {
-  const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
-  let roll = Math.random() * total;
-  for (const entry of weighted) {
-    roll -= entry.weight;
-    if (roll <= 0) {
-      return entry.item;
-    }
-  }
-  return weighted[weighted.length - 1].item;
-}
-
-function applyDelta(delta) {
-  state.metrics.druck = clamp(state.metrics.druck + (delta.druck || 0));
-  state.metrics.ambig = clamp(state.metrics.ambig + (delta.ambig || 0));
-  state.metrics.vertrauen = clamp(state.metrics.vertrauen + (delta.vertrauen || 0));
-  state.metrics.revelation = clamp(state.metrics.revelation + (delta.revelation || 0));
-}
-
-function getPlayerLabel(key) {
-  const name = key === "a" ? state.meta.playerA : state.meta.playerB;
-  return name?.trim() || (key === "a" ? "Spieler*in A" : "Spieler*in B");
-}
-
-function dominantFamily() {
-  const ordered = Object.entries(state.tracks).sort((left, right) => right[1] - left[1]);
-  if (!ordered[0] || ordered[0][1] === 0) {
-    return null;
-  }
-  return ordered[0][0];
-}
-
-function chooseEvent() {
-  const weighted = EVENTS.map((entry) => {
-    let weight = 2;
-    if (state.metrics.druck > 62 && entry.tags.includes("dogma")) {
-      weight += 4;
-    }
-    if (state.metrics.ambig > 58 && entry.tags.includes("nebel")) {
-      weight += 4;
-    }
-    if (state.metrics.vertrauen < 42 && entry.tags.includes("bruch")) {
-      weight += 4;
-    }
-    if (Math.abs(state.metrics.druck - state.metrics.ambig) < 10 && entry.tags.includes("balance")) {
-      weight += 2;
-    }
-    const family = dominantFamily();
-    if (family === "absolut" && entry.tags.includes("dogma")) {
-      weight += 2;
-    }
-    if (family === "nebel" && entry.tags.includes("nebel")) {
-      weight += 2;
-    }
-    if (family === "vermittlung" && entry.tags.includes("balance")) {
-      weight += 2;
-    }
-    if (family === "aktion" && entry.tags.includes("aktion")) {
-      weight += 2;
-    }
-    return { item: entry, weight };
-  });
-  return weightedChoice(weighted);
-}
-
-function chooseShadowFigure(event) {
-  const candidates = event.figures.map((id) => {
-    const figure = figureById(id);
-    let weight = 2;
-    if (!figure) {
-      return null;
-    }
-    if (figure.axis === "wahrheit" && state.metrics.druck > 55) {
-      weight += 3;
-    }
-    if (figure.axis === "kontrolle" && state.metrics.vertrauen < 50) {
-      weight += 2;
-    }
-    if (figure.axis === "beobachtung" && state.metrics.ambig > 50) {
-      weight += 2;
-    }
-    return { item: figure, weight };
-  }).filter(Boolean);
-  return weightedChoice(candidates);
-}
-
-function buildNightShift(event, shadowFigure) {
-  const shift = { ...event.shift, revelation: 0 };
-  const family = dominantFamily();
-  if (family === "absolut") {
-    shift.druck += 3;
-  }
-  if (family === "nebel") {
-    shift.ambig += 3;
-  }
-  if (family === "vermittlung") {
-    shift.vertrauen += 3;
-  }
-  if (family === "aktion") {
-    shift.druck += 2;
-    shift.vertrauen -= 2;
-  }
-  if (shadowFigure.axis === "kontrolle") {
-    shift.vertrauen -= 1;
-  }
-  if (shadowFigure.axis === "beobachtung") {
-    shift.ambig += 1;
-  }
-  if (shadowFigure.axis === "wahrheit") {
-    shift.druck += 1;
-  }
-  return shift;
-}
-
-function buildFragmentHands(event) {
-  const preferred = FRAGMENTS.filter((fragment) => fragment.axes.some((axis) => event.tags.includes(axis)) || fragment.figures.some((figure) => event.figures.includes(figure)));
-  const basePool = preferred.length >= 8 ? preferred : FRAGMENTS;
-  const handA = sample(basePool, 4);
-  const remaining = FRAGMENTS.filter((fragment) => !handA.some((picked) => picked.id === fragment.id));
-  const handBPool = remaining.length >= 4 ? remaining : FRAGMENTS;
-  const handB = sample(handBPool, 4);
-  return {
-    a: handA.map((entry) => entry.id),
-    b: handB.map((entry) => entry.id)
-  };
-}
-
-function buildDoctrineHand() {
-  return sample(DOCTRINE_CARDS, 3).map((entry) => entry.id);
-}
-
-function pickSecretMissions() {
-  const picks = sample(CORE_FIGURE_IDS, 2);
-  return { a: picks[0], b: picks[1] };
-}
-
-function ensureGameStarted() {
-  if (!state.started) {
-    state.started = true;
-    state.finished = false;
-    state.round = 0;
-    state.metrics = { druck: 42, ambig: 36, vertrauen: 58, revelation: 0 };
-    state.tracks = { absolut: 0, nebel: 0, vermittlung: 0, aktion: 0 };
-    state.history = [];
-    state.stats = { correctGuesses: 0, correctSuspicion: 0, enactedFamilies: [], roundsCollapsed: 0 };
-    state.secretMissions = pickSecretMissions();
-    state.current = null;
-    state.outcome = null;
-  }
-}
-
-function startGame() {
-  ensureGameStarted();
-  if (!state.current && !state.finished) {
-    startRound();
-    return;
-  }
-  saveState();
-  render();
-}
-
-function startRound() {
-  ensureGameStarted();
-  if (state.current || state.finished || state.round >= state.maxRounds) {
-    render();
-    return;
-  }
-  const event = chooseEvent();
-  const shadowFigure = chooseShadowFigure(event);
-  const nightShift = buildNightShift(event, shadowFigure);
-  applyDelta(nightShift);
-  state.round += 1;
-  state.current = {
-    eventId: event.id,
-    shadowFigureId: shadowFigure.id,
-    nightShift,
-    hint: buildHint(event, shadowFigure),
-    fragmentHands: buildFragmentHands(event),
-    fragmentChoice: { a: "", b: "" },
-    fragmentClue: { a: "", b: "" },
-    fragmentGuess: { a: "", b: "" },
-    fragmentStep: "choose",
-    fragmentResolution: null,
-    doctrineHand: buildDoctrineHand(),
-    doctrineDiscarded: "",
-    doctrineEnacted: "",
-    doctrineResidual: "",
-    doctrineResolution: null,
-    suspicion: { a: "", b: "" },
-    trustFigure: { a: "", b: "" },
-    accusePartner: { a: false, b: false },
-    suspicionResolution: null,
-    reflectionPrompt: sample(REFLECTION_PROMPTS, 1)[0],
-    reflectionText: "",
-    summary: ""
-  };
-  if (isCollapsed()) {
-    state.stats.roundsCollapsed += 1;
-  }
-  saveState();
-  render();
-}
-
-function buildHint(event, shadowFigure) {
-  const parts = [
-    `${event.title}: ${event.teaser}`,
-    `Spannung im Vordergrund: ${event.tags.filter((tag) => AXES.some((axis) => axis.id === tag)).map((tag) => axisById(tag).short).join(", ") || "verdeckte Konflikte"}.`,
-    `Die Engine protokolliert im Hintergrund eine Verschiebung, die zu ${shadowFigure.name} passt, nennt die Figur aber nicht offen.`
+function renderNav() {
+  const tabs = [
+    ["live", "Live-Spiel"],
+    ["archive", "Figurenarchiv"],
+    ["system", "Systemlogik"],
+    ["teacher", "Lehrkraft"]
   ];
-  return parts.join(" ");
+  return `
+    <aside class="nav-tabs">
+      ${tabs.map(([id, label]) => `<button type="button" class="tab-button ${state.uiTab === id ? "active" : ""}" data-tab="${id}">${label}</button>`).join("")}
+      <div class="panel" style="margin-top:12px; padding:14px;">
+        <strong>${escapeHtml(state.snapshot.teamName || "Aletheia")}</strong>
+        <p class="subtle">Raumcode: <strong>${escapeHtml(state.roomId)}</strong></p>
+        <p class="pulse ${state.connection === "live" ? "" : "offline"}">${state.connection === "live" ? "synchronisiert" : state.connection === "connecting" ? "verbinde..." : "Verbindung instabil"}</p>
+        <div class="chip-row" style="margin-top:10px;">
+          <span class="chip">Runde ${state.snapshot.round} / ${state.snapshot.roundLimit}</span>
+          <span class="chip">${escapeHtml(state.snapshot.shared.phaseTitle)}</span>
+        </div>
+      </div>
+    </aside>
+  `;
 }
 
-function isCollapsed() {
-  return state.metrics.druck >= 85 || state.metrics.ambig >= 85 || state.metrics.vertrauen <= 15;
+function renderMetricBars(metrics) {
+  return `
+    <div class="metric-strip">
+      ${renderMetric("Realitaetsdruck", metrics.druck, "pressure")}
+      ${renderMetric("Ambiguitaet", metrics.ambig, "ambiguity")}
+      ${renderMetric("Vertrauen", metrics.vertrauen, "trust")}
+      ${renderMetric("Enthuellung", metrics.revelation, "revelation")}
+    </div>
+  `;
 }
 
-function finishGameIfNeeded() {
-  if (state.finished) {
-    return;
-  }
-  if (isCollapsed() || state.round >= state.maxRounds) {
-    state.finished = true;
-    state.outcome = evaluateOutcome();
-  }
+function renderMetric(label, value, variant) {
+  return `
+    <div class="metric">
+      <div class="metric-head"><span>${label}</span><strong>${value}</strong></div>
+      <div class="bar ${variant}"><span style="width:${value}%"></span></div>
+    </div>
+  `;
 }
 
-function evaluateMission(id) {
-  const figure = figureById(id);
-  if (!figure?.mission) {
-    return false;
-  }
-  switch (id) {
-    case "byproxy":
-      return state.metrics.druck >= 35 && state.metrics.druck <= 70 && state.metrics.ambig >= 35 && state.metrics.ambig <= 70 && state.metrics.revelation >= 16;
-    case "paul":
-      return state.metrics.vertrauen >= 55 && !isCollapsed();
-    case "bernward":
-      return state.tracks.absolut >= 2 && state.metrics.druck > 55;
-    case "brigitte":
-      return state.tracks.aktion >= 2 && state.stats.correctSuspicion >= 3;
-    case "chirurgin":
-      return state.tracks.aktion >= 1 && state.tracks.nebel >= 1 && state.metrics.ambig < 78;
-    default:
-      return false;
-  }
-}
-
-function evaluateOutcome() {
-  let headline = "Ambivalente Klarheit";
-  let verdict = "Das Paar hat Wahrheit nicht als Besitz, sondern als riskante Praxis behandelt.";
-  if (state.metrics.druck >= 85) {
-    headline = "Autoritaere Wahrheit";
-    verdict = "Der Wahrheitsbegriff wurde so verengt, dass Kontrolle ueber Erkenntnis dominiert.";
-  } else if (state.metrics.ambig >= 85) {
-    headline = "Simulationskollaps";
-    verdict = "Zu viele Gegenerzaehlungen haben Wirklichkeit in konkurrierende Oberflaechen aufgeloest.";
-  } else if (state.metrics.vertrauen <= 15) {
-    headline = "Zerfall des Kollektivs";
-    verdict = "Das Paar konnte die Spannung nicht mehr gemeinsam halten. Misstrauen wurde zum eigentlichen Motor.";
-  } else if (state.metrics.revelation >= 18 && state.metrics.vertrauen >= 45) {
-    headline = "Verantwortete Mehrdeutigkeit";
-    verdict = "Das Paar hat Schattenakteure enttarnt und gleichzeitig vermieden, Ambiguitaet durch Zwang zu zerstoeren.";
-  }
+function baseLinks() {
+  const origin = window.location.origin;
   return {
-    headline,
-    verdict,
-    missionA: {
-      id: state.secretMissions.a,
-      success: evaluateMission(state.secretMissions.a)
-    },
-    missionB: {
-      id: state.secretMissions.b,
-      success: evaluateMission(state.secretMissions.b)
-    }
+    playerA: `${origin}/?mode=player&room=${state.roomId}&seat=A`,
+    playerB: `${origin}/?mode=player&room=${state.roomId}&seat=B`,
+    board: `${origin}/?mode=board&room=${state.roomId}`
   };
 }
 
-function resolveFragments() {
-  const current = state.current;
-  if (!current) {
-    return;
+function renderSharedBoard() {
+  const { shared, seats } = state.snapshot;
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Gemeinsame Lage</p>
+          <h2 class="section-title">${escapeHtml(shared.title)}</h2>
+          <p class="lead">${escapeHtml(shared.teaser)}</p>
+        </div>
+        <div>
+          <div class="phase-chip">${escapeHtml(shared.phaseTitle)}</div>
+          <p class="deadline">Restzeit: <span data-deadline="${shared.deadline || ""}">${deadlineText(shared.deadline)}</span></p>
+        </div>
+      </div>
+      <div class="dual-grid">
+        <div class="status-banner">
+          <div>
+            <strong>Einsatz der Runde</strong>
+            <p>${escapeHtml(shared.stakes)}</p>
+          </div>
+          <div class="chip-row">
+            ${shared.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}
+          </div>
+          ${shared.interrupt ? `<div class="danger-note"><strong>${escapeHtml(shared.interrupt.title)}</strong><p>${escapeHtml(shared.interrupt.text)}</p></div>` : ""}
+          <div class="system-note"><strong>Phasenauftrag</strong><p>${escapeHtml(shared.phaseText)}</p></div>
+        </div>
+        <div class="panel" style="padding:16px;">
+          <div class="section-head">
+            <h3 class="section-title">Teamstatus</h3>
+            <p class="subtle">${escapeHtml(seats.A.name)} / ${escapeHtml(seats.B.name)}</p>
+          </div>
+          ${renderMetricBars(state.snapshot.metrics)}
+          <div class="kpi-grid" style="margin-top:16px;">
+            <div class="kpi-card"><strong>Absolutheit</strong><div class="kpi-value">${state.snapshot.doctrineTracks.absolut}</div></div>
+            <div class="kpi-card"><strong>Nebel</strong><div class="kpi-value">${state.snapshot.doctrineTracks.nebel}</div></div>
+            <div class="kpi-card"><strong>Vermittlung</strong><div class="kpi-value">${state.snapshot.doctrineTracks.vermittlung}</div></div>
+            <div class="kpi-card"><strong>Aktion</strong><div class="kpi-value">${state.snapshot.doctrineTracks.aktion}</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderFeed(title, items, emptyText) {
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">${title}</h2>
+          <p class="subtle">Zeitkritische Systemmeldungen und Archivspur.</p>
+        </div>
+      </div>
+      <div class="feed-list">
+        ${items.length ? items.map((item) => `
+          <article class="feed-card">
+            <strong>${escapeHtml(item.title)}</strong>
+            <p>${escapeHtml(item.text)}</p>
+            <div class="feed-meta">${escapeHtml(formatTime(item.createdAt))}</div>
+          </article>
+        `).join("") : `<div class="empty">${emptyText}</div>`}
+      </div>
+    </section>
+  `;
+}
+
+function renderPlayerTask() {
+  const task = state.snapshot.actor?.task;
+  if (!task) {
+    return `<section class="panel"><div class="empty">Keine private Aufgabe verfuegbar.</div></section>`;
   }
-  const choiceA = fragmentById(current.fragmentChoice.a);
-  const choiceB = fragmentById(current.fragmentChoice.b);
-  if (!choiceA || !choiceB || !current.fragmentGuess.a || !current.fragmentGuess.b) {
-    return;
-  }
-  applyDelta(choiceA.effect);
-  applyDelta(choiceB.effect);
-  const guessA = choiceB.axes.includes(current.fragmentGuess.a);
-  const guessB = choiceA.axes.includes(current.fragmentGuess.b);
-  const delta = { druck: 0, ambig: 0, vertrauen: 0, revelation: 0 };
-  if (guessA) {
-    delta.vertrauen += 5;
-    delta.revelation += 2;
-    state.stats.correctGuesses += 1;
+  const seatName = state.snapshot.actor.name || `Spieler*in ${state.seat}`;
+  let inner = "";
+  if (task.type === "fragment-submit") {
+    inner = `
+      <form id="fragment-submit-form" class="stack">
+        <div class="choice-list">
+          ${task.hand.map((fragment) => `
+            <label class="choice">
+              <input type="radio" name="fragmentId" value="${fragment.id}" ${task.selection?.fragmentId === fragment.id ? "checked" : ""}>
+              <strong>${escapeHtml(fragment.title)}</strong>
+              <p>${escapeHtml(fragment.text)}</p>
+            </label>
+          `).join("")}
+        </div>
+        <label class="field">
+          Hinweiswort oder kurzer Bildsatz
+          <input type="text" name="clue" value="${escapeHtml(task.selection?.clue || "")}" placeholder="z. B. 'sauber, aber gefaehrlich'">
+        </label>
+        <button type="submit">Fragment senden</button>
+      </form>
+    `;
+  } else if (task.type === "fragment-guess") {
+    inner = `
+      <form id="fragment-guess-form" class="stack">
+        <div class="task-card">
+          <h3>${escapeHtml(task.opponentFragment.title)}</h3>
+          <p>${escapeHtml(task.opponentFragment.text)}</p>
+          <p><strong>Hinweis:</strong> ${escapeHtml(task.clue)}</p>
+        </div>
+        <label class="field">
+          Welche Achse steckt dahinter?
+          <select name="axisId">
+            <option value="">Bitte waehlen</option>
+            ${task.axisOptions.map((axis) => `<option value="${axis.id}" ${task.guessAxis === axis.id ? "selected" : ""}>${escapeHtml(axis.title)}</option>`).join("")}
+          </select>
+        </label>
+        <button type="submit">Deutung senden</button>
+      </form>
+    `;
+  } else if (task.type === "doctrine-discard" || task.type === "doctrine-enact") {
+    inner = `
+      <form id="${task.type === "doctrine-discard" ? "doctrine-discard-form" : "doctrine-enact-form"}" class="stack">
+        <div class="choice-list">
+          ${task.hand.map((card) => `
+            <label class="choice">
+              <input type="radio" name="cardId" value="${card.id}" ${task.chosen === card.id ? "checked" : ""}>
+              <strong>${escapeHtml(card.title)}</strong>
+              <p>${escapeHtml(card.text)}</p>
+              <p><strong>Familie:</strong> ${escapeHtml(card.family)}</p>
+            </label>
+          `).join("")}
+        </div>
+        <button type="submit">${task.type === "doctrine-discard" ? "Doktrin verwerfen" : "Doktrin setzen"}</button>
+      </form>
+    `;
+  } else if (task.type === "response") {
+    inner = `
+      <form id="response-form" class="stack">
+        <label class="field">
+          Schattenakteur
+          <select name="suspectId">
+            <option value="">Bitte waehlen</option>
+            ${task.suspectOptions.map((figure) => `<option value="${figure.id}" ${task.selection?.suspectId === figure.id ? "selected" : ""}>${escapeHtml(figure.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label class="field">
+          Wem vertraust du in dieser Szene am ehesten?
+          <select name="trustFigureId">
+            <option value="">Bitte waehlen</option>
+            ${task.trustOptions.map((figure) => `<option value="${figure.id}" ${task.selection?.trustFigureId === figure.id ? "selected" : ""}>${escapeHtml(figure.name)}</option>`).join("")}
+          </select>
+        </label>
+        <div class="choice-list">
+          ${task.moveOptions.map((move) => `
+            <label class="choice">
+              <input type="radio" name="moveId" value="${move.id}" ${task.selection?.moveId === move.id ? "checked" : ""}>
+              <strong>${escapeHtml(move.title)}</strong>
+              <p>${escapeHtml(move.text)}</p>
+            </label>
+          `).join("")}
+        </div>
+        <label class="field">
+          <span>Ich glaube, mein Gegenueber verdeckt absichtlich etwas.</span>
+          <input type="checkbox" name="accusePartner" ${task.selection?.accusePartner ? "checked" : ""}>
+        </label>
+        <button type="submit">Verdacht und Intervention senden</button>
+      </form>
+    `;
+  } else if (task.type === "reflection") {
+    inner = `
+      <form id="reflection-form" class="stack">
+        <label class="field">
+          Kurze Deutung
+          <textarea name="text" placeholder="2-5 Saetze">${escapeHtml(task.value || "")}</textarea>
+        </label>
+        <button type="submit">Reflexion archivieren</button>
+      </form>
+    `;
   } else {
-    delta.ambig += 4;
-    delta.vertrauen -= 4;
+    inner = `<div class="empty">${escapeHtml(task.text)}</div>`;
   }
-  if (guessB) {
-    delta.vertrauen += 5;
-    delta.revelation += 2;
-    state.stats.correctGuesses += 1;
-  } else {
-    delta.ambig += 4;
-    delta.vertrauen -= 4;
-  }
-  if (choiceA.axes.some((axis) => choiceB.axes.includes(axis))) {
-    delta.revelation += 1;
-  }
-  applyDelta(delta);
-  current.fragmentResolution = {
-    guessA,
-    guessB,
-    delta
-  };
-  saveState();
-  render();
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Private Konsole von ${escapeHtml(seatName)}</h2>
+          <p class="subtle">${escapeHtml(task.title)}</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <h3>${escapeHtml(task.title)}</h3>
+        <p>${escapeHtml(task.text)}</p>
+      </div>
+      ${inner}
+    </section>
+  `;
 }
 
-function enactDoctrine() {
-  const current = state.current;
-  if (!current || !current.doctrineDiscarded || !current.doctrineEnacted) {
-    return;
+function renderMissionCard() {
+  const mission = state.snapshot.actor?.mission;
+  if (!mission) {
+    return "";
   }
-  const enacted = doctrineById(current.doctrineEnacted);
-  const residualId = current.doctrineHand.find((id) => id !== current.doctrineDiscarded && id !== current.doctrineEnacted);
-  const residual = doctrineById(residualId);
-  current.doctrineResidual = residual?.id || "";
-  applyDelta(enacted.publicEffect);
-  if (residual) {
-    applyDelta(residual.shadowEffect);
-  }
-  state.tracks[enacted.family] += 1;
-  state.stats.enactedFamilies.push(enacted.family);
-  current.doctrineResolution = {
-    enactedFamily: enacted.family,
-    enactedTitle: enacted.title,
-    residualTitle: residual?.title || ""
-  };
-  saveState();
-  render();
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Geheimes Briefing</h2>
+          <p class="subtle">Nur auf diesem Endgeraet sichtbar.</p>
+        </div>
+      </div>
+      <div class="task-card">
+        <h3>${escapeHtml(mission.title)}</h3>
+        <p><strong>Rolle:</strong> ${escapeHtml(mission.role)}</p>
+        <p><strong>Ziel:</strong> ${escapeHtml(mission.goal)}</p>
+        <p><strong>Blinder Fleck:</strong> ${escapeHtml(mission.blindSpot)}</p>
+      </div>
+    </section>
+  `;
 }
 
-function resolveSuspicion() {
-  const current = state.current;
-  if (!current || !current.suspicion.a || !current.suspicion.b || !current.trustFigure.a || !current.trustFigure.b) {
-    return;
-  }
-  const correctA = current.suspicion.a === current.shadowFigureId;
-  const correctB = current.suspicion.b === current.shadowFigureId;
-  const delta = { druck: 0, ambig: 0, vertrauen: 0, revelation: 0 };
-  if (correctA) {
-    delta.revelation += 4;
-    state.stats.correctSuspicion += 1;
-  } else {
-    delta.ambig += 2;
-  }
-  if (correctB) {
-    delta.revelation += 4;
-    state.stats.correctSuspicion += 1;
-  } else {
-    delta.ambig += 2;
-  }
-  if (correctA && correctB) {
-    delta.vertrauen += 4;
-    delta.ambig -= 3;
-  }
-  if (current.trustFigure.a === current.trustFigure.b) {
-    delta.vertrauen += 2;
-  }
-  if (current.accusePartner.a) {
-    delta.vertrauen -= 5;
-  }
-  if (current.accusePartner.b) {
-    delta.vertrauen -= 5;
-  }
-  applyDelta(delta);
-  current.suspicionResolution = {
-    correctA,
-    correctB,
-    delta
-  };
-  saveState();
-  render();
-}
-
-function closeRound() {
-  const current = state.current;
-  if (!current) {
-    return;
-  }
-  const event = eventById(current.eventId);
-  const shadowFigure = figureById(current.shadowFigureId);
-  const choiceA = fragmentById(current.fragmentChoice.a);
-  const choiceB = fragmentById(current.fragmentChoice.b);
-  const enacted = doctrineById(current.doctrineEnacted);
-  const summary = {
-    round: state.round,
-    eventId: current.eventId,
-    shadowFigureId: current.shadowFigureId,
-    eventTitle: event.title,
-    shadowFigureName: shadowFigure.name,
-    nightShift: current.nightShift,
-    fragmentChoiceA: choiceA?.title || "",
-    fragmentChoiceB: choiceB?.title || "",
-    fragmentGuessA: current.fragmentGuess.a,
-    fragmentGuessB: current.fragmentGuess.b,
-    fragmentResolution: current.fragmentResolution,
-    doctrineEnacted: enacted?.title || "",
-    doctrineFamily: enacted?.family || "",
-    doctrineResolution: current.doctrineResolution,
-    suspicion: current.suspicion,
-    trustFigure: current.trustFigure,
-    suspicionResolution: current.suspicionResolution,
-    reflectionPrompt: current.reflectionPrompt,
-    reflectionText: current.reflectionText,
-    metricsAfter: { ...state.metrics }
-  };
-  state.history.unshift(summary);
-  state.current = null;
-  finishGameIfNeeded();
-  saveState();
-  render();
-}
-
-function exportJson() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-  downloadBlob(blob, `aletheia-wirklichkeitslabor-${dateStamp()}.json`);
-}
-
-function exportMarkdown() {
-  const lines = [];
-  lines.push(`# Aletheia Wirklichkeitslabor`);
-  lines.push("");
-  lines.push(`- Team: ${state.meta.teamName || "-"}`);
-  lines.push(`- Klasse/Kurs: ${state.meta.className || "-"}`);
-  lines.push(`- Spieler*in A: ${getPlayerLabel("a")}`);
-  lines.push(`- Spieler*in B: ${getPlayerLabel("b")}`);
-  lines.push(`- Runden gespielt: ${state.round}`);
-  lines.push("");
-  lines.push(`## Endstand`);
-  lines.push(`- Realitaetsdruck: ${state.metrics.druck}`);
-  lines.push(`- Ambiguitaet: ${state.metrics.ambig}`);
-  lines.push(`- Vertrauen: ${state.metrics.vertrauen}`);
-  lines.push(`- Enthuellung: ${state.metrics.revelation}`);
-  lines.push("");
-  if (state.outcome) {
-    lines.push(`## Urteil`);
-    lines.push(`**${state.outcome.headline}**`);
-    lines.push("");
-    lines.push(state.outcome.verdict);
-    lines.push("");
-  }
-  lines.push(`## Geheime Auftraege`);
-  [state.secretMissions.a, state.secretMissions.b].forEach((missionId, index) => {
-    const figure = figureById(missionId);
-    if (!figure?.mission) {
-      return;
-    }
-    lines.push(`- ${index === 0 ? getPlayerLabel("a") : getPlayerLabel("b")}: ${figure.mission.title} | ${figure.mission.goal}`);
-  });
-  lines.push("");
-  lines.push(`## Rundenprotokoll`);
-  state.history.slice().reverse().forEach((entry) => {
-    lines.push(`### Runde ${entry.round}: ${entry.eventTitle}`);
-    lines.push(`- Schattenakteur: ${entry.shadowFigureName}`);
-    lines.push(`- Nachtshift: Druck ${signed(entry.nightShift.druck)}, Ambiguitaet ${signed(entry.nightShift.ambig)}, Vertrauen ${signed(entry.nightShift.vertrauen)}`);
-    lines.push(`- Fragmente: ${entry.fragmentChoiceA} / ${entry.fragmentChoiceB}`);
-    lines.push(`- Gesetzte Doktrin: ${entry.doctrineEnacted} (${FAMILY_LABELS[entry.doctrineFamily] || "-"})`);
-    lines.push(`- Verdacht: ${figureById(entry.suspicion.a)?.name || entry.suspicion.a} / ${figureById(entry.suspicion.b)?.name || entry.suspicion.b}`);
-    lines.push(`- Reflexion: ${entry.reflectionText || "-"}`);
-    lines.push("");
-  });
-  const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
-  downloadBlob(blob, `aletheia-wirklichkeitslabor-${dateStamp()}.md`);
+function renderHostPanel() {
+  const hidden = state.snapshot.actor?.hidden;
+  const links = baseLinks();
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Host-Konsole</h2>
+          <p class="subtle">Verteile die Links an die Endgeraete und beobachte den verborgenen Motor.</p>
+        </div>
+        <div class="button-row">
+          ${state.snapshot.canStart ? button("Partie starten", "start-game") : ""}
+          ${state.snapshot.canNextRound ? button("Naechste Runde", "next-round", "secondary") : ""}
+          ${(state.snapshot.canRestart || state.snapshot.phase === "finished") ? button("Neu aufsetzen", "restart-game", "ghost") : ""}
+          ${button("Markdown exportieren", "export-markdown", "ghost")}
+        </div>
+      </div>
+      <div class="stack">
+        <div class="connection-card">
+          <strong>Join-Links</strong>
+          <div class="stack" style="margin-top:12px;">
+            <div class="linkline"><div class="linkbox">${escapeHtml(links.playerA)}</div>${button("Link A kopieren", "copy-playerA", "ghost")}</div>
+            <div class="linkline"><div class="linkbox">${escapeHtml(links.playerB)}</div>${button("Link B kopieren", "copy-playerB", "ghost")}</div>
+            <div class="linkline"><div class="linkbox">${escapeHtml(links.board)}</div>${button("Board-Link kopieren", "copy-board", "ghost")}</div>
+          </div>
+        </div>
+        <div class="dual-grid">
+          <div class="status-card">
+            <strong>Verbundene Sitze</strong>
+            <p>A: ${state.snapshot.seats.A.joined ? "verbunden" : "offen"} | ${escapeHtml(state.snapshot.seats.A.name)}</p>
+            <p>B: ${state.snapshot.seats.B.joined ? "verbunden" : "offen"} | ${escapeHtml(state.snapshot.seats.B.name)}</p>
+          </div>
+          <div class="status-card">
+            <strong>Spielraum</strong>
+            <p>Raumcode ${escapeHtml(state.roomId)} | ${escapeHtml(state.snapshot.teamName)}</p>
+            <p>${escapeHtml(state.snapshot.className || "ohne Kursangabe")}</p>
+          </div>
+        </div>
+        ${hidden ? `
+          <div class="triple-grid">
+            <div class="mini-card">
+              <strong>Schattenakteur</strong>
+              <p>${escapeHtml(hidden.shadowFigure)}</p>
+            </div>
+            <div class="mini-card">
+              <strong>Nachtshift</strong>
+              <p>D ${signed(hidden.nightShift.druck)}, A ${signed(hidden.nightShift.ambig)}, V ${signed(hidden.nightShift.vertrauen)}</p>
+            </div>
+            <div class="mini-card">
+              <strong>Spielerstatus</strong>
+              <p>Fragmente A/B: ${hidden.fragmentSubmitted.A ? "ja" : "nein"} / ${hidden.fragmentSubmitted.B ? "ja" : "nein"}</p>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    </section>
+  `;
 }
 
 function signed(value) {
-  if (value > 0) {
-    return `+${value}`;
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function renderLiveView() {
+  if (state.view === "host") {
+    return `
+      <div class="surface">
+        ${renderSharedBoard()}
+        <div class="phase-grid">
+          ${renderHostPanel()}
+          ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine Systemmeldungen.")} 
+        </div>
+      </div>
+    `;
   }
-  return String(value);
+  if (state.view === "player") {
+    return `
+      <div class="surface">
+        ${renderSharedBoard()}
+        <div class="phase-grid">
+          <div class="surface">
+            ${renderMissionCard()}
+            ${renderPlayerTask()}
+          </div>
+          <div class="surface">
+            ${renderFeed("Private Inbox", state.snapshot.actor?.privateFeed || [], "Noch keine privaten Zuschriften.")}
+            ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine oeffentlichen Meldungen.")}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="surface">
+      ${renderSharedBoard()}
+      <div class="phase-grid">
+        ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine Meldungen.")}
+        ${renderHistoryPanel()}
+      </div>
+    </div>
+  `;
 }
 
-function dateStamp() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+function renderHistoryPanel() {
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Rundenarchiv</h2>
+          <p class="subtle">Archivierte Szenen, Doktrinen und Reflexionen.</p>
+        </div>
+      </div>
+      <div class="scroll">
+        ${state.snapshot.history.length ? state.snapshot.history.map((entry) => `
+          <article class="history-card">
+            <strong>Runde ${entry.round}: ${escapeHtml(entry.title)}</strong>
+            <p><strong>Doktrin:</strong> ${escapeHtml(entry.doctrine)}</p>
+            <p><strong>Schattenakteur:</strong> ${escapeHtml(entry.shadowFigure)}</p>
+            <p>${escapeHtml(entry.summary)}</p>
+          </article>
+        `).join("") : `<div class="empty">Noch keine abgeschlossene Runde.</div>`}
+      </div>
+    </section>
+  `;
 }
 
-function downloadBlob(blob, fileName) {
+function renderArchiveTab() {
+  return `
+    <div class="surface">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Figurenmatrix</h2>
+            <p class="subtle">Verdichtet aus Factsheets, Lehreruebersicht, Figurenanalyse und Postertexten.</p>
+          </div>
+        </div>
+        <div class="card-grid">
+          ${state.snapshot.library.figures.map((figure) => `
+            <article class="archive-card">
+              <strong>${escapeHtml(figure.name)}</strong>
+              <p><strong>Rolle:</strong> ${escapeHtml(figure.role)}</p>
+              <p><strong>Mindset:</strong> ${escapeHtml(figure.mindset)}</p>
+              <p><strong>Funktion:</strong> ${escapeHtml(figure.function)}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Interpretationsachsen</h2>
+            <p class="subtle">Diese Konfliktlinien strukturieren Spiel und literarische Auswertung.</p>
+          </div>
+        </div>
+        <div class="dual-grid">
+          ${state.snapshot.library.axes.map((axis) => `
+            <article class="archive-card">
+              <strong>${escapeHtml(axis.title)}</strong>
+              <p>${escapeHtml(axis.description)}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderSystemTab() {
+  return `
+    <div class="surface">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Systemlogik</h2>
+            <p class="subtle">Das Spiel reagiert nicht nur auf Eingaben, sondern auf Metrikschwellen und Schatteneffekte.</p>
+          </div>
+        </div>
+        <div class="dual-grid">
+          ${state.snapshot.library.mechanics.map((entry) => `
+            <article class="archive-card">
+              <strong>${escapeHtml(entry.title)}</strong>
+              <p>${escapeHtml(entry.text)}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+      ${renderHistoryPanel()}
+    </div>
+  `;
+}
+
+function renderTeacherTab() {
+  return `
+    <div class="surface">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Lehrkraft-Notizen</h2>
+            <p class="subtle">Einsatz, Auswertung und Differenzierung fuer den Unterricht.</p>
+          </div>
+        </div>
+        <div class="dual-grid">
+          ${state.snapshot.library.teacher.map((entry) => `
+            <article class="archive-card">
+              <strong>${escapeHtml(entry.title)}</strong>
+              <p>${escapeHtml(entry.text)}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+      ${state.snapshot.outcome ? `
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Endurteil</h2>
+              <p class="subtle">Gemeinsames Ergebnis und individuelle Auftraege.</p>
+            </div>
+          </div>
+          <div class="status-banner">
+            <h3 class="status-phase">${escapeHtml(state.snapshot.outcome.headline)}</h3>
+            <p>${escapeHtml(state.snapshot.outcome.verdict)}</p>
+            <div class="dual-grid">
+              <div class="task-card">
+                <h3>${escapeHtml(state.snapshot.outcome.missionA.title)}</h3>
+                <p>${state.snapshot.outcome.missionA.success ? "erfuellt" : "nicht erfuellt"}</p>
+              </div>
+              <div class="task-card">
+                <h3>${escapeHtml(state.snapshot.outcome.missionB.title)}</h3>
+                <p>${state.snapshot.outcome.missionB.success ? "erfuellt" : "nicht erfuellt"}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderConnected() {
+  root.innerHTML = `
+    <section class="hero">
+      <div>
+        <p class="eyebrow">${state.view === "host" ? "Host-Modus" : state.view === "player" ? `Privatmodus ${escapeHtml(state.seat)}` : "Board-Modus"}</p>
+        <h1 class="title">${escapeHtml(state.snapshot.teamName || "Aletheia")}</h1>
+        <p class="lead">${escapeHtml(state.snapshot.className || "Synchronisierte Mehrgeraete-Partie")}</p>
+        <div class="chip-row">
+          <span class="chip">Raum ${escapeHtml(state.roomId)}</span>
+          <span class="chip">${escapeHtml(state.snapshot.shared.phaseTitle)}</span>
+          <span class="chip">Runde ${state.snapshot.round} / ${state.snapshot.roundLimit}</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="meta-list">
+          <span class="meta-badge">Sitz A: ${state.snapshot.seats.A.joined ? escapeHtml(state.snapshot.seats.A.name) : "offen"}</span>
+          <span class="meta-badge">Sitz B: ${state.snapshot.seats.B.joined ? escapeHtml(state.snapshot.seats.B.name) : "offen"}</span>
+          <span class="meta-badge">${state.connection === "live" ? "Live synchronisiert" : state.connection === "connecting" ? "Verbindung wird aufgebaut" : "Verbindung instabil"}</span>
+        </div>
+        <div class="button-row">
+          ${button("Zur Startseite", "go-home", "ghost")}
+          ${button("Neu laden", "refresh", "ghost")}
+          ${button("JSON exportieren", "export-json", "ghost")}
+        </div>
+        ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}
+      </div>
+    </section>
+
+    <div class="layout">
+      ${renderNav()}
+      <section class="surface">
+        ${state.uiTab === "live" ? renderLiveView() : ""}
+        ${state.uiTab === "archive" ? renderArchiveTab() : ""}
+        ${state.uiTab === "system" ? renderSystemTab() : ""}
+        ${state.uiTab === "teacher" ? renderTeacherTab() : ""}
+      </section>
+    </div>
+    <p class="footer-note">${BUILD_ID} | Alle Inhalte bleiben lokal im Klassennetz auf dem gestarteten Server. Keine externen Dienste.</p>
+  `;
+}
+
+function render() {
+  saveSession();
+  if (state.view === "landing" || !state.roomId || !state.snapshot) {
+    renderLanding();
+    return;
+  }
+  renderConnected();
+}
+
+function renderConnectionOnly() {
+  const pulses = root.querySelectorAll("[data-deadline]");
+  pulses.forEach((node) => {
+    node.textContent = deadlineText(Number(node.dataset.deadline) || null);
+  });
+}
+
+function download(filename, content, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = fileName;
+  link.download = filename;
   document.body.append(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
 }
 
-function resetGame() {
-  state = defaultState();
-  saveState();
+function exportJson() {
+  if (!state.snapshot) {
+    return;
+  }
+  download(`aletheia-${state.roomId}.json`, JSON.stringify(state.snapshot, null, 2), "application/json");
+}
+
+function exportMarkdown() {
+  if (!state.snapshot) {
+    return;
+  }
+  const lines = [
+    `# Aletheia Wirklichkeitslabor`,
+    ``,
+    `- Raumcode: ${state.roomId}`,
+    `- Team: ${state.snapshot.teamName}`,
+    `- Klasse/Kurs: ${state.snapshot.className || "-"}`,
+    `- Runde: ${state.snapshot.round} / ${state.snapshot.roundLimit}`,
+    ``,
+    `## Endstand`,
+    `- Realitaetsdruck: ${state.snapshot.metrics.druck}`,
+    `- Ambiguitaet: ${state.snapshot.metrics.ambig}`,
+    `- Vertrauen: ${state.snapshot.metrics.vertrauen}`,
+    `- Enthuellung: ${state.snapshot.metrics.revelation}`,
+    ``
+  ];
+  if (state.snapshot.outcome) {
+    lines.push(`## Urteil`);
+    lines.push(`**${state.snapshot.outcome.headline}**`);
+    lines.push(``);
+    lines.push(state.snapshot.outcome.verdict);
+    lines.push(``);
+  }
+  lines.push(`## Rundenarchiv`);
+  state.snapshot.history.slice().reverse().forEach((entry) => {
+    lines.push(`### Runde ${entry.round}: ${entry.title}`);
+    lines.push(`- Doktrin: ${entry.doctrine}`);
+    lines.push(`- Schattenakteur: ${entry.shadowFigure}`);
+    lines.push(`- Zusammenfassung: ${entry.summary}`);
+    lines.push(`- Reflexion A: ${entry.reflectionA || "-"}`);
+    lines.push(`- Reflexion B: ${entry.reflectionB || "-"}`);
+    lines.push(``);
+  });
+  download(`aletheia-${state.roomId}.md`, lines.join("\n"), "text/markdown;charset=utf-8");
+}
+
+async function copyLink(kind) {
+  const links = baseLinks();
+  await navigator.clipboard.writeText(links[kind]);
+}
+
+function clearSession() {
+  closeStream();
+  state.view = "landing";
+  state.roomId = "";
+  state.seat = "";
+  state.token = "";
+  state.hostToken = "";
+  state.snapshot = null;
+  state.error = "";
   render();
 }
 
-function setMetaValue(key, value) {
-  state.meta[key] = value;
-  saveState();
-  renderBriefings();
-  renderStatus();
-}
+window.addEventListener("beforeunload", () => {
+  closeStream();
+});
 
-function currentPhaseLabel() {
-  if (state.finished) {
-    return "Abschluss";
-  }
-  if (!state.started) {
-    return "Bereit";
-  }
-  if (!state.current) {
-    return "Zwischenrunde";
-  }
-  if (!state.current.fragmentResolution) {
-    return state.current.fragmentStep === "choose" ? "Fragmentwahl" : "Fragmentdeutung";
-  }
-  if (!state.current.doctrineResolution) {
-    return "Doktrin";
-  }
-  if (!state.current.suspicionResolution) {
-    return "Verdacht";
-  }
-  return "Reflexion";
-}
-
-function render() {
-  renderTabs();
-  renderBriefings();
-  renderStatus();
-  renderScene();
-  renderPhase();
-  renderArchives();
-  renderSystem();
-  renderTeacher();
-  renderProtocol();
-}
-
-function renderTabs() {
-  document.querySelectorAll(".tab").forEach((button) => {
-    const isActive = button.dataset.tabTarget === state.ui.activeTab;
-    button.classList.toggle("active", isActive);
-  });
-  document.querySelectorAll(".panel").forEach((panel) => {
-    panel.classList.toggle("active", panel.id === state.ui.activeTab);
-  });
-  const phasePill = document.getElementById("phase-pill");
-  phasePill.textContent = currentPhaseLabel();
-}
-
-function renderBriefings() {
-  const node = document.getElementById("briefings");
-  const missions = state.secretMissions;
-  if (!missions.a || !missions.b) {
-    node.innerHTML = `<div class="empty-state">Nach dem Start erscheinen hier die geheimen Auftraege fuer beide Spieler*innen.</div>`;
+document.addEventListener("click", async (event) => {
+  const target = event.target.closest("[data-action], [data-tab]");
+  if (!target) {
     return;
   }
-  node.innerHTML = ["a", "b"].map((key) => {
-    const figure = figureById(missions[key]);
-    const outcome = state.outcome ? (key === "a" ? state.outcome.missionA : state.outcome.missionB) : null;
-    return `
-      <details class="briefing">
-        <summary>${escapeHtml(getPlayerLabel(key))}: geheimes Briefing oeffnen</summary>
-        <div class="briefing-body">
-          <strong>${escapeHtml(figure.mission.title)}</strong>
-          <p>${escapeHtml(figure.role)}</p>
-          <p><strong>Ziel:</strong> ${escapeHtml(figure.mission.goal)}</p>
-          <p><strong>Blinder Fleck:</strong> ${escapeHtml(figure.mission.blindSpot)}</p>
-          ${outcome ? `<p><strong>Status:</strong> ${outcome.success ? "erfuellt" : "nicht erfuellt"}</p>` : ""}
-        </div>
-      </details>
-    `;
-  }).join("");
-}
-
-function renderStatus() {
-  const node = document.getElementById("status-panel");
-  const family = dominantFamily();
-  node.innerHTML = `
-    <div class="metric-wrap">
-      ${metricTemplate("Realitaetsdruck", state.metrics.druck, "druck")}
-      ${metricTemplate("Ambiguitaet", state.metrics.ambig, "ambig")}
-      ${metricTemplate("Vertrauen", state.metrics.vertrauen, "vertrauen")}
-      ${metricTemplate("Enthuellung", state.metrics.revelation, "revelation")}
-    </div>
-    <div class="status-grid">
-      <div class="mini-card">
-        <strong>Runde</strong>
-        <p>${state.round} / ${state.maxRounds}</p>
-      </div>
-      <div class="mini-card">
-        <strong>Dominante Doktrin</strong>
-        <p>${family ? FAMILY_LABELS[family] : "Noch offen"}</p>
-      </div>
-      <div class="mini-card">
-        <strong>Verdachtsquote</strong>
-        <p>${state.stats.correctSuspicion} richtige Markierungen</p>
-      </div>
-    </div>
-    <div class="info-chip-row">
-      <span class="chip">Absolutheit ${state.tracks.absolut}</span>
-      <span class="chip">Nebel ${state.tracks.nebel}</span>
-      <span class="chip">Vermittlung ${state.tracks.vermittlung}</span>
-      <span class="chip">Aktion ${state.tracks.aktion}</span>
-    </div>
-  `;
-  document.querySelectorAll("[data-meta]").forEach((input) => {
-    input.value = state.meta[input.dataset.meta] || "";
-  });
-  renderRecentSummary();
-}
-
-function metricTemplate(label, value, variant) {
-  return `
-    <div class="metric">
-      <div class="metric-label"><span>${label}</span><strong>${value}</strong></div>
-      <div class="bar ${variant}"><span style="width:${value}%"></span></div>
-    </div>
-  `;
-}
-
-function renderScene() {
-  const node = document.getElementById("scene-panel");
-  if (!state.started) {
-    node.innerHTML = `<div class="empty-state">Startet ein neues Spiel, damit die Engine ein erstes Szenendossier, einen Schattenakteur und verdeckte Nachtwerte erzeugen kann.</div>`;
+  if (target.dataset.tab) {
+    state.uiTab = target.dataset.tab;
+    saveSession();
+    render();
     return;
   }
-  if (!state.current) {
-    if (state.finished && state.outcome) {
-      node.innerHTML = `
-        <div class="outcome-banner">
-          <h3>${escapeHtml(state.outcome.headline)}</h3>
-          <p>${escapeHtml(state.outcome.verdict)}</p>
-          <div class="button-row">
-            <button type="button" data-action="export-markdown" class="secondary">Urteil exportieren</button>
-            <button type="button" data-action="reset-game" class="ghost">Neue Partie vorbereiten</button>
-          </div>
-        </div>
-      `;
-    } else {
-      node.innerHTML = `
-        <div class="empty-state">
-          Runde abgeschlossen. Der naechste Start erzeugt ein neues Szenendossier auf Basis eurer bisherigen Entscheidungen.
-        </div>
-      `;
-    }
+  const action = target.dataset.action;
+  if (action === "go-home") {
+    clearSession();
     return;
   }
-  const event = eventById(state.current.eventId);
-  node.innerHTML = `
-    <div class="stage-card">
-      <h3>${escapeHtml(event.title)}</h3>
-      <p>${escapeHtml(event.teaser)}</p>
-      <div class="callout">
-        <strong>Einsatz:</strong>
-        <p>${escapeHtml(event.stakes)}</p>
-      </div>
-      <div class="callout alt">
-        <strong>Systemhinweis:</strong>
-        <p>${escapeHtml(state.current.hint)}</p>
-      </div>
-      <div class="info-chip-row">
-        ${event.tags.map((tag) => `<span class="chip">${escapeHtml(axisById(tag)?.short || tag)}</span>`).join("")}
-      </div>
-    </div>
-  `;
-}
-
-function renderPhase() {
-  const node = document.getElementById("phase-panel");
-  if (!state.started) {
-    node.innerHTML = `<div class="empty-state">Das Rollenspiel fuehrt erst nach dem Start durch die Phasen Fragment, Doktrin, Verdacht und Reflexion.</div>`;
+  if (action === "refresh") {
+    await fetchSnapshot();
     return;
   }
-  if (!state.current) {
-    node.innerHTML = `
-      <div class="selection-card">
-        <h3>${state.finished ? "Partie beendet" : "Naechste Runde bereit"}</h3>
-        <p>${state.finished ? "Ihr koennt nun das Urteil auswerten oder die Partie exportieren." : "Die App hat die vorherige Runde archiviert. Startet die naechste Runde, um ein neues Dossier zu laden."}</p>
-        <div class="button-row">
-          <button type="button" data-action="start-round">Naechste Runde</button>
-          <button type="button" data-action="export-json" class="secondary">JSON exportieren</button>
-        </div>
-      </div>
-    `;
+  if (action === "start-game") {
+    await sendAction("start-game");
     return;
   }
-
-  const current = state.current;
-  if (!current.fragmentResolution) {
-    node.innerHTML = renderFragmentPhase(current);
+  if (action === "next-round") {
+    await sendAction("next-round");
     return;
   }
-  if (!current.doctrineResolution) {
-    node.innerHTML = renderDoctrinePhase(current);
+  if (action === "restart-game") {
+    await sendAction("restart-game");
     return;
   }
-  if (!current.suspicionResolution) {
-    node.innerHTML = renderSuspicionPhase(current);
+  if (action === "export-json") {
+    exportJson();
     return;
   }
-  node.innerHTML = renderReflectionPhase(current);
-}
-
-function renderFragmentPhase(current) {
-  const hands = current.fragmentHands;
-  if (current.fragmentStep === "choose") {
-    return `
-      <div class="selection-card">
-        <h3>Fragmentphase: waehlen und verschluesseln</h3>
-        <p>Beide Spieler*innen waehlen je ein Fragment und formulieren ein kurzes Deutungswort oder einen metaphorischen Hinweis. Nennt nicht direkt die Figur.</p>
-        <div class="selection-grid">
-          ${renderFragmentChooser("a", hands.a, current)}
-          ${renderFragmentChooser("b", hands.b, current)}
-        </div>
-        <div class="button-row">
-          <button type="button" data-action="fragment-next">Zu den Deutungsraten</button>
-        </div>
-      </div>
-    `;
-  }
-  return `
-    <div class="selection-card">
-      <h3>Fragmentphase: deuten</h3>
-      <p>Jetzt seht ihr nur die gewaelten Fragmente und Hinweiswoerter des Gegenuebers. Ordnet das Deutungssignal einer Achse zu.</p>
-      <div class="split-note">
-        ${renderFragmentGuessCard("a", fragmentById(current.fragmentChoice.b), current.fragmentClue.b, current.fragmentGuess.a)}
-        ${renderFragmentGuessCard("b", fragmentById(current.fragmentChoice.a), current.fragmentClue.a, current.fragmentGuess.b)}
-      </div>
-      <div class="button-row">
-        <button type="button" data-action="resolve-fragments">Fragmente auswerten</button>
-      </div>
-    </div>
-  `;
-}
-
-function renderFragmentChooser(key, hand, current) {
-  return `
-    <div class="stage-card">
-      <h3>${escapeHtml(getPlayerLabel(key))}</h3>
-      <div class="choice-list">
-        ${hand.map((id) => {
-          const fragment = fragmentById(id);
-          return `
-            <label class="choice-card">
-              <input type="radio" name="fragment-${key}" value="${fragment.id}" data-path="current.fragmentChoice.${key}" ${current.fragmentChoice[key] === fragment.id ? "checked" : ""}>
-              <strong>${escapeHtml(fragment.title)}</strong>
-              <p>${escapeHtml(fragment.text)}</p>
-            </label>
-          `;
-        }).join("")}
-      </div>
-      <label class="field-block">
-        Hinweissatz
-        <input type="text" data-path="current.fragmentClue.${key}" value="${escapeHtml(current.fragmentClue[key])}" placeholder="z. B. 'zu glatt, um unschuldig zu sein'">
-      </label>
-    </div>
-  `;
-}
-
-function renderFragmentGuessCard(key, fragment, clue, currentGuess) {
-  return `
-    <div class="stage-card">
-      <h3>${escapeHtml(getPlayerLabel(key))} deutet</h3>
-      <p><strong>Fragment:</strong> ${escapeHtml(fragment.title)}</p>
-      <p><strong>Hinweis:</strong> ${escapeHtml(clue || "-")}</p>
-      <label class="field-block">
-        Welche Achse steckt dahinter?
-        <select data-path="current.fragmentGuess.${key}">
-          <option value="">Bitte waehlen</option>
-          ${AXES.map((axis) => `<option value="${axis.id}" ${currentGuess === axis.id ? "selected" : ""}>${escapeHtml(axis.title)}</option>`).join("")}
-        </select>
-      </label>
-    </div>
-  `;
-}
-
-function fragmentChooseReady(current) {
-  return Boolean(current.fragmentChoice.a && current.fragmentChoice.b && current.fragmentClue.a.trim() && current.fragmentClue.b.trim());
-}
-
-function fragmentGuessReady(current) {
-  return Boolean(current.fragmentGuess.a && current.fragmentGuess.b);
-}
-
-function renderDoctrinePhase(current) {
-  const hand = current.doctrineHand.map(doctrineById);
-  const remaining = hand.filter((card) => card.id !== current.doctrineDiscarded);
-  return `
-    <div class="selection-card">
-      <h3>Doktrinphase</h3>
-      <p>Spieler*in A verwirft zuerst eine Karte. Danach setzt Spieler*in B eine der uebrigen. Die dritte Karte bleibt verdeckt wirksam.</p>
-      <div class="choice-list">
-        ${hand.map((card) => `
-          <label class="choice-card">
-            <input type="radio" name="doctrine-discard" value="${card.id}" data-path="current.doctrineDiscarded" ${current.doctrineDiscarded === card.id ? "checked" : ""}>
-            <strong>${escapeHtml(card.title)}</strong>
-            <p>${escapeHtml(card.text)}</p>
-            <p><strong>Familie:</strong> ${escapeHtml(FAMILY_LABELS[card.family])}</p>
-          </label>
-        `).join("")}
-      </div>
-      <div class="button-row">
-        <button type="button" data-action="apply-doctrine">Doktrin auswerten</button>
-      </div>
-      ${current.doctrineDiscarded ? `
-        <div class="callout alt">
-          <strong>${escapeHtml(getPlayerLabel("b"))} setzt jetzt:</strong>
-          <div class="choice-list">
-            ${remaining.map((card) => `
-              <label class="choice-card">
-                <input type="radio" name="doctrine-enacted" value="${card.id}" data-path="current.doctrineEnacted" ${current.doctrineEnacted === card.id ? "checked" : ""}>
-                <strong>${escapeHtml(card.title)}</strong>
-                <p>${escapeHtml(card.text)}</p>
-              </label>
-            `).join("")}
-          </div>
-        </div>
-      ` : ""}
-      ${current.fragmentResolution ? `
-        <div class="mini-grid">
-          <div class="mini-card"><strong>Deutung A</strong><p>${current.fragmentResolution.guessA ? "richtig" : "falsch"}</p></div>
-          <div class="mini-card"><strong>Deutung B</strong><p>${current.fragmentResolution.guessB ? "richtig" : "falsch"}</p></div>
-          <div class="mini-card"><strong>Folge</strong><p>Vertrauen ${signed(current.fragmentResolution.delta.vertrauen)}, Ambiguitaet ${signed(current.fragmentResolution.delta.ambig)}</p></div>
-        </div>
-      ` : ""}
-    </div>
-  `;
-}
-
-function renderSuspicionPhase(current) {
-  return `
-    <div class="selection-card">
-      <h3>Verdachtsphase</h3>
-      <p>Markiert getrennt, welche Figur die Runde aus dem Schatten bestimmt hat, und welcher Haltung ihr in dieser Konstellation eher vertrauen wuerdet.</p>
-      <div class="selection-grid">
-        ${renderSuspicionCard("a", current)}
-        ${renderSuspicionCard("b", current)}
-      </div>
-      <div class="button-row">
-        <button type="button" data-action="resolve-suspicion">Verdacht auswerten</button>
-      </div>
-      <div class="callout">
-        <strong>Aktive Doktrin:</strong>
-        <p>${escapeHtml(doctrineById(current.doctrineEnacted).title)} (${escapeHtml(FAMILY_LABELS[doctrineById(current.doctrineEnacted).family])})</p>
-      </div>
-    </div>
-  `;
-}
-
-function renderSuspicionCard(key, current) {
-  return `
-    <div class="stage-card">
-      <h3>${escapeHtml(getPlayerLabel(key))}</h3>
-      <label class="field-block">
-        Schattenakteur
-        <select data-path="current.suspicion.${key}">
-          <option value="">Bitte waehlen</option>
-          ${FIGURES.map((figure) => `<option value="${figure.id}" ${current.suspicion[key] === figure.id ? "selected" : ""}>${escapeHtml(figure.name)}</option>`).join("")}
-        </select>
-      </label>
-      <label class="field-block">
-        Wem vertraust du in dieser Runde am ehesten?
-        <select data-path="current.trustFigure.${key}">
-          <option value="">Bitte waehlen</option>
-          ${FIGURES.map((figure) => `<option value="${figure.id}" ${current.trustFigure[key] === figure.id ? "selected" : ""}>${escapeHtml(figure.name)}</option>`).join("")}
-        </select>
-      </label>
-      <label class="field-block">
-        <span>Ich glaube, mein Gegenueber verheimlicht absichtlich etwas.</span>
-        <input type="checkbox" data-path="current.accusePartner.${key}" ${current.accusePartner[key] ? "checked" : ""}>
-      </label>
-    </div>
-  `;
-}
-
-function suspicionReady(current) {
-  return Boolean(current.suspicion.a && current.suspicion.b && current.trustFigure.a && current.trustFigure.b);
-}
-
-function renderReflectionPhase(current) {
-  const event = eventById(current.eventId);
-  return `
-    <div class="selection-card">
-      <h3>Reflexion und Archivierung</h3>
-      <p><strong>Prompt:</strong> ${escapeHtml(current.reflectionPrompt)}</p>
-      <textarea data-path="current.reflectionText" placeholder="2-5 Saetze zur Deutung der Runde">${escapeHtml(current.reflectionText || "")}</textarea>
-      <div class="mini-grid">
-        <div class="mini-card">
-          <strong>Szenendossier</strong>
-          <p>${escapeHtml(event.title)}</p>
-        </div>
-        <div class="mini-card">
-          <strong>Doktrin</strong>
-          <p>${escapeHtml(doctrineById(current.doctrineEnacted).title)}</p>
-        </div>
-        <div class="mini-card">
-          <strong>Verdachtsresultat</strong>
-          <p>${current.suspicionResolution.correctA && current.suspicionResolution.correctB ? "beide richtig" : current.suspicionResolution.correctA || current.suspicionResolution.correctB ? "teilweise richtig" : "beide falsch"}</p>
-        </div>
-      </div>
-      <div class="button-row">
-        <button type="button" data-action="close-round">Runde archivieren</button>
-      </div>
-    </div>
-  `;
-}
-
-function renderRecentSummary() {
-  const node = document.getElementById("recent-summary");
-  const entry = state.history[0];
-  if (!entry) {
-    node.innerHTML = `<div class="empty-state">Noch keine Runde archiviert.</div>`;
+  if (action === "export-markdown") {
+    exportMarkdown();
     return;
   }
-  node.innerHTML = `
-    <div class="history-card">
-      <strong>Runde ${entry.round}: ${escapeHtml(entry.eventTitle)}</strong>
-      <p><strong>Schattenakteur:</strong> ${escapeHtml(entry.shadowFigureName)}</p>
-      <p><strong>Fragmente:</strong> ${escapeHtml(entry.fragmentChoiceA)} / ${escapeHtml(entry.fragmentChoiceB)}</p>
-      <p><strong>Doktrin:</strong> ${escapeHtml(entry.doctrineEnacted)} (${escapeHtml(FAMILY_LABELS[entry.doctrineFamily] || "-")})</p>
-      <p><strong>Reflexion:</strong> ${escapeHtml(entry.reflectionText || "-")}</p>
-    </div>
-  `;
-}
-
-function renderArchives() {
-  document.getElementById("figure-archive").innerHTML = FIGURES.map((figure) => `
-    <div class="archive-card">
-      <strong>${escapeHtml(figure.name)}</strong>
-      <p><strong>Rolle:</strong> ${escapeHtml(figure.role)}</p>
-      <p><strong>Mindset:</strong> ${escapeHtml(figure.mindset)}</p>
-      <p><strong>Didaktische Funktion:</strong> ${escapeHtml(figure.function)}</p>
-    </div>
-  `).join("");
-
-  document.getElementById("axis-archive").innerHTML = AXES.map((axis) => `
-    <div class="archive-card">
-      <strong>${escapeHtml(axis.title)}</strong>
-      <p>${escapeHtml(axis.description)}</p>
-    </div>
-  `).join("");
-
-  document.getElementById("event-archive").innerHTML = EVENTS.map((event) => `
-    <div class="event-card">
-      <strong>${escapeHtml(event.title)}</strong>
-      <p>${escapeHtml(event.teaser)}</p>
-      <p><strong>Einsatz:</strong> ${escapeHtml(event.stakes)}</p>
-    </div>
-  `).join("");
-}
-
-function renderSystem() {
-  document.getElementById("system-overview").innerHTML = SYSTEM_OVERVIEW.map((entry) => `
-    <div class="system-card">
-      <strong>${escapeHtml(entry.title)}</strong>
-      <p>${escapeHtml(entry.text)}</p>
-    </div>
-  `).join("");
-
-  document.getElementById("doctrine-overview").innerHTML = DOCTRINE_OVERVIEW.map((entry) => `
-    <div class="system-card">
-      <strong>${escapeHtml(entry.title)}</strong>
-      <p>${escapeHtml(entry.text)}</p>
-    </div>
-  `).join("");
-
-  document.getElementById("win-conditions").innerHTML = `
-    <div class="system-card">
-      <strong>Gemeinsames Ziel</strong>
-      <p>Das Paar soll sechs Runden lang Verdacht, Wahrheit und Beziehung austarieren. Gute Enden entstehen nur, wenn nicht ein Extremwert alles dominiert.</p>
-      <ul class="small-list">
-        <li>Zu viel Realitaetsdruck fuehrt zu "Autoritaere Wahrheit".</li>
-        <li>Zu viel Ambiguitaet fuehrt zu "Simulationskollaps".</li>
-        <li>Zu wenig Vertrauen fuehrt zu "Zerfall des Kollektivs".</li>
-        <li>Hohe Enthuellung bei tragfaehigem Vertrauen fuehrt zu "Verantwortete Mehrdeutigkeit".</li>
-      </ul>
-    </div>
-  `;
-}
-
-function renderTeacher() {
-  document.getElementById("teacher-flow").innerHTML = TEACHER_FLOW.map((entry) => `
-    <div class="archive-card">
-      <strong>${escapeHtml(entry.title)}</strong>
-      <p>${escapeHtml(entry.text)}</p>
-    </div>
-  `).join("");
-
-  document.getElementById("teacher-eval").innerHTML = TEACHER_EVAL.map((entry) => `
-    <div class="archive-card">
-      <strong>${escapeHtml(entry.title)}</strong>
-      <p>${escapeHtml(entry.text)}</p>
-    </div>
-  `).join("");
-}
-
-function renderProtocol() {
-  const historyNode = document.getElementById("history-panel");
-  const outcomeNode = document.getElementById("outcome-panel");
-
-  historyNode.innerHTML = state.history.length ? state.history.map((entry) => `
-    <div class="history-card">
-      <strong>Runde ${entry.round}: ${escapeHtml(entry.eventTitle)}</strong>
-      <p><strong>Schattenakteur:</strong> ${escapeHtml(entry.shadowFigureName)}</p>
-      <p><strong>Nachtshift:</strong> Druck ${signed(entry.nightShift.druck)}, Ambiguitaet ${signed(entry.nightShift.ambig)}, Vertrauen ${signed(entry.nightShift.vertrauen)}</p>
-      <p><strong>Doktrin:</strong> ${escapeHtml(entry.doctrineEnacted)} (${escapeHtml(FAMILY_LABELS[entry.doctrineFamily] || "-")})</p>
-      <p><strong>Reflexion:</strong> ${escapeHtml(entry.reflectionText || "-")}</p>
-    </div>
-  `).join("") : `<div class="empty-state">Noch kein archiviertes Rundenprotokoll.</div>`;
-
-  if (!state.outcome) {
-    outcomeNode.innerHTML = `<div class="empty-state">Das finale Urteil erscheint nach Runde 6 oder nach einem Kollaps des Systems.</div>`;
+  if (action === "copy-playerA") {
+    await copyLink("playerA");
     return;
   }
-  const missionAFigure = figureById(state.outcome.missionA.id);
-  const missionBFigure = figureById(state.outcome.missionB.id);
-  outcomeNode.innerHTML = `
-    <div class="outcome-banner">
-      <h3>${escapeHtml(state.outcome.headline)}</h3>
-      <p>${escapeHtml(state.outcome.verdict)}</p>
-      <div class="archive-card">
-        <strong>${escapeHtml(getPlayerLabel("a"))}</strong>
-        <p>${escapeHtml(missionAFigure.mission.title)}: ${state.outcome.missionA.success ? "erfuellt" : "nicht erfuellt"}</p>
-      </div>
-      <div class="archive-card">
-        <strong>${escapeHtml(getPlayerLabel("b"))}</strong>
-        <p>${escapeHtml(missionBFigure.mission.title)}: ${state.outcome.missionB.success ? "erfuellt" : "nicht erfuellt"}</p>
-      </div>
-    </div>
-  `;
-}
-
-function updateByPath(path, value, isCheckbox = false) {
-  const parts = path.split(".");
-  let cursor = state;
-  for (let index = 0; index < parts.length - 1; index += 1) {
-    cursor = cursor[parts[index]];
-  }
-  cursor[parts[parts.length - 1]] = isCheckbox ? Boolean(value) : value;
-  saveState();
-}
-
-document.addEventListener("click", (event) => {
-  const actionNode = event.target.closest("[data-action]");
-  if (!actionNode) {
-    const tabNode = event.target.closest("[data-tab-target]");
-    if (tabNode) {
-      state.ui.activeTab = tabNode.dataset.tabTarget;
-      saveState();
-      render();
-    }
+  if (action === "copy-playerB") {
+    await copyLink("playerB");
     return;
   }
-  const action = actionNode.dataset.action;
-  switch (action) {
-    case "start-game":
-      startGame();
-      break;
-    case "start-round":
-      startRound();
-      break;
-    case "fragment-next":
-      if (state.current && fragmentChooseReady(state.current)) {
-        state.current.fragmentStep = "guess";
-        saveState();
-        render();
-      }
-      break;
-    case "resolve-fragments":
-      resolveFragments();
-      break;
-    case "apply-doctrine":
-      enactDoctrine();
-      break;
-    case "resolve-suspicion":
-      resolveSuspicion();
-      break;
-    case "close-round":
-      closeRound();
-      break;
-    case "export-json":
-      exportJson();
-      break;
-    case "export-markdown":
-      exportMarkdown();
-      break;
-    case "reset-game":
-      resetGame();
-      break;
-    default:
-      break;
+  if (action === "copy-board") {
+    await copyLink("board");
   }
 });
 
-document.addEventListener("input", (event) => {
-  const metaKey = event.target.dataset.meta;
-  if (metaKey) {
-    setMetaValue(metaKey, event.target.value);
+document.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  if (form.id === "create-room-form") {
+    const data = new FormData(form);
+    state.createDraft = {
+      teamName: String(data.get("teamName") || ""),
+      className: String(data.get("className") || ""),
+      roundLimit: Number(data.get("roundLimit") || 6)
+    };
+    await createRoom();
     return;
   }
-  const path = event.target.dataset.path;
-  if (!path) {
+  if (form.id === "join-room-form") {
+    const data = new FormData(form);
+    state.joinDraft = {
+      roomId: String(data.get("roomId") || "").toUpperCase(),
+      seat: String(data.get("seat") || "A"),
+      name: String(data.get("name") || "")
+    };
+    await joinRoom();
     return;
   }
-  updateByPath(path, event.target.type === "checkbox" ? event.target.checked : event.target.value, event.target.type === "checkbox");
+  if (form.id === "board-room-form") {
+    const data = new FormData(form);
+    state.joinDraft.roomId = String(data.get("roomId") || "").toUpperCase();
+    await openBoard();
+    return;
+  }
+  if (form.id === "fragment-submit-form") {
+    const data = new FormData(form);
+    await sendAction("fragment-submit", {
+      fragmentId: String(data.get("fragmentId") || ""),
+      clue: String(data.get("clue") || "")
+    });
+    return;
+  }
+  if (form.id === "fragment-guess-form") {
+    const data = new FormData(form);
+    await sendAction("fragment-guess", {
+      axisId: String(data.get("axisId") || "")
+    });
+    return;
+  }
+  if (form.id === "doctrine-discard-form") {
+    const data = new FormData(form);
+    await sendAction("doctrine-discard", {
+      cardId: String(data.get("cardId") || "")
+    });
+    return;
+  }
+  if (form.id === "doctrine-enact-form") {
+    const data = new FormData(form);
+    await sendAction("doctrine-enact", {
+      cardId: String(data.get("cardId") || "")
+    });
+    return;
+  }
+  if (form.id === "response-form") {
+    const data = new FormData(form);
+    await sendAction("response-submit", {
+      suspectId: String(data.get("suspectId") || ""),
+      trustFigureId: String(data.get("trustFigureId") || ""),
+      moveId: String(data.get("moveId") || ""),
+      accusePartner: data.get("accusePartner") === "on"
+    });
+    return;
+  }
+  if (form.id === "reflection-form") {
+    const data = new FormData(form);
+    await sendAction("reflection-submit", {
+      text: String(data.get("text") || "")
+    });
+  }
 });
 
-document.addEventListener("change", (event) => {
-  const path = event.target.dataset.path;
-  if (!path) {
-    return;
-  }
-  updateByPath(path, event.target.type === "checkbox" ? event.target.checked : event.target.value, event.target.type === "checkbox");
+setInterval(() => {
+  renderConnectionOnly();
+}, 1000);
+
+loadSession();
+applyUrlHints();
+saveSession();
+
+if (state.roomId && state.view !== "landing") {
+  fetchSnapshot().then(connectStream);
+} else {
   render();
-});
-
-render();
+}

@@ -1,51 +1,67 @@
 # Aletheia Wirklichkeitslabor
 
-Lokale Static-Web-App fuer ein interaktives Zwei-Personen-Rollenspiel zu Raphaela Edelbauers "Die echtere Wirklichkeit".
+Mehrgeraete-Lernlandschaft fuer Raphaela Edelbauers *Die echtere Wirklichkeit*.
 
-## Konzept
+Build-Stand: `Multi-Device Build 2026-03-09 11:27`
 
-Die App uebersetzt die gelieferten Materialien zur Gruppe Aletheia in eine spielbare Lernlandschaft:
+## Was jetzt anders ist
 
-- Figurenarchiv auf Basis der Factsheets, Figurenanalyse, Lehreruebersicht und Poster
-- Szenendossiers zu Wahrheit, Handlung, Technik, Beobachtung, Loyalitaet und Institution
-- Dixit-artige Fragmentkarten fuer indirekte Deutung
-- Secret-Hitler-artige Doktrinphase mit verdeckter Restwirkung
-- Werewolf-artige Verdachtsphase gegen einen von der Engine bestimmten Schattenakteur
-- Exportierbares Spielprotokoll fuer Auswertung, Interpretation und Leistungsprodukte
+Die App ist keine lokale Einzelseite mehr, sondern ein synchronisiertes Klassenzimmer-Spiel:
 
-## Dateien
-
-- `index.html`: Struktur der Lernlandschaft
-- `styles.css`: visuelle Gestaltung und responsive Oberfläche
-- `app.js`: Spielengine, State, Rendering, Export
-- `README.md`: Nutzungshinweise
+- lokaler Node-Server mit Raumcodes
+- zwei private Player-Ansichten fuer unterschiedliche Endgeraete
+- optionaler Board-/Beamer-Modus fuer die gemeinsame Szene
+- Host-Konsole mit Join-Links und versteckter Engine
+- Live-Feed, private Inboxen, Timer und Systemeingriffe
+- exportierbares JSON- und Markdown-Protokoll
 
 ## Start
 
-Direkt im Browser oeffnen oder lokal per einfachem Webserver starten.
-
-Beispiel:
+Im Projektordner:
 
 ```bash
-npx serve /Users/patrickfischer/Documents/New\ project/aletheia-wirklichkeitslabor
+cd /Users/patrickfischer/Documents/New\ project/aletheia-wirklichkeitslabor
+node server.mjs --host 0.0.0.0 --port 8787
 ```
 
-## Spielablauf
+Danach:
 
-1. Teamnamen und Spielernamen eintragen.
-2. `Neues Spiel starten` klicken.
-3. Geheime Briefings nacheinander oeffnen.
-4. Pro Runde:
-   - Fragment waehlen und verschluesseln
-   - Achse des Gegenuebers deuten
-   - Doktrin verwerfen / setzen
-   - Schattenakteur verdaechtigen
-   - Reflexion notieren
-5. Nach sechs Runden oder bei Systemkollaps das Urteil auswerten und exportieren.
+1. Auf dem Startgeraet `http://localhost:8787` oeffnen.
+2. Einen Raum anlegen.
+3. Die angezeigten Links fuer Spieler*in A, Spieler*in B und optional das Board an die Endgeraete verteilen.
+4. Die beiden Spielenden treten mit ihren eigenen Geraeten bei.
+5. Partie starten.
 
-## Didaktischer Einsatz
+Der Server gibt beim Start auch die LAN-/WLAN-Adressen aus. Genau diese URL muessen die anderen Geraete im selben Netz verwenden.
 
-- Doppelstunde mit Fokus auf Figurenkonstellation und Wahrheitsbegriff
-- Vertiefung nach der Figurenanalyse
-- Auswertungsgrundlage fuer Interpretation, Debatte oder Schreibauftrag
-- Vergleich mehrerer Paarprotokolle als Klassenreflexion
+## Modi
+
+- `Host`: Raum anlegen, Join-Links kopieren, Systemmotor beobachten
+- `Player`: private Rolle, geheimes Briefing, private Inbox und Aktionsformulare
+- `Board`: gemeinsame Szene, Feed, Metriken, aber keine geheimen Infos
+
+## Spielphasen
+
+1. Fragment waehlen und metaphorischen Hinweis senden
+2. Hinweis des Gegenuebers einer Achse zuordnen
+3. Doktrin verwerfen und setzen
+4. Schattenakteur markieren, Vertrauensfigur benennen, Intervention waehlen
+5. Reflexion archivieren
+
+## Reaktive Engine
+
+Die Serverlogik reagiert live auf:
+
+- Realitaetsdruck
+- Ambiguitaet
+- Vertrauen
+- Enthuellung
+
+Ab bestimmten Schwellen aktiviert sie Ereignisse wie:
+
+- `Saeuberungsprotokoll`
+- `Nebelmaschine`
+- `Spaltungsmatrix`
+- `Gegenzeugin`
+
+Diese Eingriffe erzeugen neue Systemmeldungen und private Zuschriften und veraendern die Metriken unmittelbar.
