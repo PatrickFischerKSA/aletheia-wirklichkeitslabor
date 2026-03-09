@@ -26,6 +26,8 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
+  position: relative;
+  isolation: isolate;
   background:
     radial-gradient(circle at 15% 20%, rgba(182, 123, 24, 0.18), transparent 24%),
     radial-gradient(circle at 80% 12%, rgba(30, 90, 81, 0.15), transparent 22%),
@@ -50,6 +52,22 @@ body::before {
     );
   opacity: 0.52;
   mix-blend-mode: multiply;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -40px;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(239, 230, 214, 0.5), rgba(217, 204, 183, 0.58)),
+    url("./assets/byproxy.jpg");
+  background-size: cover;
+  background-position: center 18%;
+  filter: blur(28px) saturate(0.92);
+  transform: scale(1.08);
+  opacity: 0.34;
 }
 
 button,
