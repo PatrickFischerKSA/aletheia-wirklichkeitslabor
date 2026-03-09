@@ -21,7 +21,8 @@ const state = {
     className: "",
     roundLimit: 6
   },
-  error: ""
+  error: "",
+  backendReady: null
 };
 
 const root = document.getElementById("app");
@@ -84,6 +85,30 @@ function setError(message) {
   render();
 }
 
+async function checkBackend() {
+  try {
+    const response = await fetch("/api/health", { cache: "no-store" });
+    if (!response.ok) {
+      state.backendReady = false;
+      return false;
+    }
+    const data = await response.json().catch(() => null);
+    state.backendReady = Boolean(data?.ok);
+    return state.backendReady;
+  } catch {
+    state.backendReady = false;
+    return false;
+  }
+}
+
+async function ensureBackend() {
+  const ready = await checkBackend();
+  if (ready) {
+    return true;
+  }
+  throw new Error("Der Spielserver läuft hier nicht korrekt. Starte im Projektordner `node server.mjs --host 0.0.0.0 --port 8787` und öffne genau diese URL, nicht nur eine statische HTML-Datei.");
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     headers: {
@@ -91,11 +116,19 @@ async function api(path, options = {}) {
     },
     ...options
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.error || "Unbekannter Serverfehler");
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || `Serverfehler (${response.status})`);
+    }
+    return data;
   }
-  return data;
+  const text = await response.text().catch(() => "");
+  if (!response.ok) {
+    throw new Error(text?.trim() ? `Falscher Server antwortet statt der Spiel-API (${response.status}).` : `Serverfehler (${response.status})`);
+  }
+  throw new Error("Die API hat keine JSON-Antwort geliefert. Wahrscheinlich läuft nicht `server.mjs`, sondern nur ein statischer Webserver.");
 }
 
 function viewerParams() {
@@ -170,6 +203,7 @@ function connectStream() {
 
 async function createRoom() {
   try {
+    await ensureBackend();
     const result = await api("/api/rooms", {
       method: "POST",
       body: JSON.stringify(state.createDraft)
@@ -189,6 +223,7 @@ async function createRoom() {
 
 async function joinRoom() {
   try {
+    await ensureBackend();
     const result = await api(`/api/rooms/${state.joinDraft.roomId.toUpperCase()}/join`, {
       method: "POST",
       body: JSON.stringify({
@@ -212,16 +247,22 @@ async function joinRoom() {
 }
 
 async function openBoard() {
-  state.view = "board";
-  state.roomId = state.joinDraft.roomId.toUpperCase();
-  state.error = "";
-  saveSession();
-  await fetchSnapshot();
-  connectStream();
+  try {
+    await ensureBackend();
+    state.view = "board";
+    state.roomId = state.joinDraft.roomId.toUpperCase();
+    state.error = "";
+    saveSession();
+    await fetchSnapshot();
+    connectStream();
+  } catch (error) {
+    setError(error.message);
+  }
 }
 
 async function sendAction(type, payload = {}) {
   try {
+    await ensureBackend();
     await api(`/api/rooms/${state.roomId}/action`, {
       method: "POST",
       body: JSON.stringify({
@@ -303,6 +344,7 @@ function renderLanding() {
           <span class="meta-badge">Zwei Endgeraete + optionales Board</span>
           <span class="meta-badge">Raumcode + Live-Synchronisierung</span>
           <span class="meta-badge">${BUILD_ID}</span>
+          <span class="meta-badge">${state.backendReady === false ? "API nicht erreichbar" : state.backendReady === true ? "API bereit" : "API wird geprüft"}</span>
         </div>
         ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}
       </div>
@@ -1227,6 +1269,8 @@ setInterval(() => {
 loadSession();
 applyUrlHints();
 saveSession();
+
+checkBackend().then(render);
 
 if (state.roomId && state.view !== "landing") {
   fetchSnapshot().then(connectStream);
