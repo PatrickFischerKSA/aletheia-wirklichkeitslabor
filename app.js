@@ -323,13 +323,56 @@ function formatTime(isoString) {
 }
 
 function germanize(value) {
-  return String(value || "")
-    .replaceAll("Ae", "Ä")
-    .replaceAll("Oe", "Ö")
-    .replaceAll("Ue", "Ü")
-    .replaceAll("ae", "ä")
-    .replaceAll("oe", "ö")
-    .replaceAll("ue", "ü");
+  const replacements = [
+    ["Ambiguitaet", "Ambiguität"],
+    ["Enthuellung", "Enthüllung"],
+    ["Realitaetsdruck", "Realitätsdruck"],
+    ["Loyalitaet", "Loyalität"],
+    ["Mehrgeraete", "Mehrgeräte"],
+    ["Endgeraete", "Endgeräte"],
+    ["Endgeraet", "Endgerät"],
+    ["Geraete", "Geräte"],
+    ["Geraet", "Gerät"],
+    ["geoeffnete", "geöffnete"],
+    ["Oeffentlicher", "Öffentlicher"],
+    ["oeffentlichen", "öffentlichen"],
+    ["oeffentliche", "öffentliche"],
+    ["oeffentlicher", "öffentlicher"],
+    ["oeffentlich", "öffentlich"],
+    ["oeffnen", "öffnen"],
+    ["oeffnet", "öffnet"],
+    ["oeffne", "öffne"],
+    ["Oeffnen", "Öffnen"],
+    ["waehrend", "während"],
+    ["Waehrend", "Während"],
+    ["waehlen", "wählen"],
+    ["Waehlen", "Wählen"],
+    ["waehlt", "wählt"],
+    ["waehle", "wähle"],
+    ["verfuegbar", "verfügbar"],
+    ["gegenueber", "gegenüber"],
+    ["Gegenueber", "Gegenüber"],
+    ["zurueck", "zurück"],
+    ["Zurueck", "Zurück"],
+    ["naechste", "nächste"],
+    ["Naechste", "Nächste"],
+    ["ueber", "über"],
+    ["Ueber", "Über"],
+    ["fuer", "für"],
+    ["Fuer", "Für"],
+    ["moeglich", "möglich"],
+    ["Moeglich", "Möglich"],
+    ["veraendert", "verändert"],
+    ["Veraendert", "Verändert"],
+    ["gefaehrlich", "gefährlich"],
+    ["Gefaehrlich", "Gefährlich"],
+    ["zugaenglich", "zugänglich"],
+    ["uebrig", "übrig"],
+    ["Uebrig", "Übrig"],
+    ["Zuege", "Züge"],
+    ["zuege", "züge"]
+  ];
+  return replacements.reduce((text, [source, target]) => text.replaceAll(source, target), String(value || ""));
 }
 
 function deadlineText(deadline) {
