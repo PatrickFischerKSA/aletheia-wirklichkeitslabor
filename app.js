@@ -972,7 +972,7 @@ function renderHostPanel() {
         <div class="button-row">
           ${state.snapshot.canStart ? button("Partie starten", "start-game") : ""}
           ${state.snapshot.canNextRound ? button("Naechste Runde", "next-round", "secondary") : ""}
-          ${(state.snapshot.canRestart || state.snapshot.phase === "finished") ? button("Neu aufsetzen", "restart-game", "ghost") : ""}
+          ${button("Reset", "restart-game", "warn")}
           ${button("Markdown exportieren", "export-markdown", "ghost")}
         </div>
       </div>
@@ -1243,6 +1243,7 @@ function renderConnected() {
         <div class="button-row">
           ${button("Zur Startseite", "go-home", "ghost")}
           ${button("Neu laden", "refresh", "ghost")}
+          ${state.view === "solo" ? button("Reset", "restart-game", "warn") : ""}
           ${button("JSON exportieren", "export-json", "ghost")}
         </div>
         ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}

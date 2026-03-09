@@ -496,6 +496,10 @@ function canControlRoom(room, viewer) {
   return false;
 }
 
+function canDirectRoom(room, viewer) {
+  return (viewer.mode === "host" || viewer.mode === "solo") && validateViewer(room, viewer);
+}
+
 function clueForFragment(fragment) {
   const axis = fragment.axes[0];
   const map = {
@@ -1404,6 +1408,9 @@ function handleRoomAction(room, viewer, type, payload = {}) {
   }
 
   if (type === "start-game") {
+    if (!canDirectRoom(room, viewer)) {
+      throw new Error("Nur Host oder Solo-Modus koennen die Partie steuern.");
+    }
     if (!roomNeedsBothSeats(room)) {
       throw new Error("Beide Sitze muessen verbunden sein.");
     }
@@ -1413,6 +1420,9 @@ function handleRoomAction(room, viewer, type, payload = {}) {
   }
 
   if (type === "next-round") {
+    if (!canDirectRoom(room, viewer)) {
+      throw new Error("Nur Host oder Solo-Modus koennen die Partie steuern.");
+    }
     if (room.phase !== "interlude") {
       throw new Error("Naechste Runde ist noch nicht freigeschaltet.");
     }
@@ -1421,8 +1431,8 @@ function handleRoomAction(room, viewer, type, payload = {}) {
   }
 
   if (type === "restart-game") {
-    if (!(room.phase === "finished" || room.phase === "interlude")) {
-      throw new Error("Neustart ist erst nach einer archivierten Runde sinnvoll.");
+    if (!canDirectRoom(room, viewer)) {
+      throw new Error("Nur Host oder Solo-Modus koennen die Partie resetten.");
     }
     room.phase = "lobby";
     resetGame(room);
