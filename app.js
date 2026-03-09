@@ -291,10 +291,10 @@ function renderLanding() {
         <h1 class="title">Aletheia Wirklichkeitslabor</h1>
         <p class="lead">Ein Mehrgeraete-Rollenspiel mit Host-, Board- und Player-Modus. Zwei Lernende spielen verdeckt auf eigenen Endgeraeten, waehrend eine digitale Engine mit Live-Feeds, privaten Zuschriften, Eingriffsereignissen und synchronisierten Phasen den Verlauf laufend veraendert.</p>
         <div class="chip-row">
-          <span class="chip">Werwolf: Verdacht</span>
-          <span class="chip">Secret Hitler: Doktrindeck</span>
-          <span class="chip">Dixit: metaphorische Deutung</span>
-          <span class="chip">Mehrgeraete-Sync</span>
+          <button type="button" class="chip-button" data-action="jump-create">Host-Modus wählen</button>
+          <button type="button" class="chip-button" data-action="jump-join">Spieler*in wählen</button>
+          <button type="button" class="chip-button" data-action="jump-board">Board wählen</button>
+          <button type="button" class="chip-button" data-action="jump-system">Spielprinzip ansehen</button>
         </div>
       </div>
       <div class="hero-actions">
@@ -316,7 +316,7 @@ function renderLanding() {
         </div>
       </div>
       <div class="mode-grid">
-        <div class="mode-card">
+        <div class="mode-card" id="create-card">
           <h3>Spielraum anlegen</h3>
           <p>Ein Geraet startet den Raum und erhaelt Host-Rechte. Danach koennen Join-Links fuer Spieler*in A, Spieler*in B und Board verteilt werden.</p>
           <form id="create-room-form" class="stack">
@@ -338,7 +338,7 @@ function renderLanding() {
           </form>
         </div>
 
-        <div class="mode-card">
+        <div class="mode-card" id="join-card">
           <h3>Als Spieler*in beitreten</h3>
           <p>Jedes Endgeraet bekommt eine eigene private Rolle, Inbox und Eingabemaske. Beide Geraete sehen dieselbe gemeinsame Lage, aber unterschiedliche Handlungsauftraege.</p>
           <form id="join-room-form" class="stack">
@@ -361,7 +361,7 @@ function renderLanding() {
           </form>
         </div>
 
-        <div class="mode-card">
+        <div class="mode-card" id="board-card">
           <h3>Board / Beamer oeffnen</h3>
           <p>Der Board-Modus zeigt die gemeinsame Szene, Metriken und den oeffentlichen Feed, aber keine privaten Rollen oder geheimen Karten.</p>
           <form id="board-room-form" class="stack">
@@ -372,6 +372,33 @@ function renderLanding() {
             <button type="submit" class="ghost">Board verbinden</button>
           </form>
         </div>
+      </div>
+    </section>
+
+    <section class="panel" id="system-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Spielprinzip</h2>
+          <p class="subtle">Die Modi sind Host, Spieler*in und Board. Die vier Tags oben sind jetzt Schnellwahl-Buttons und keine blossen Deko-Chips mehr.</p>
+        </div>
+      </div>
+      <div class="dual-grid">
+        <article class="archive-card">
+          <strong>Host</strong>
+          <p>Legt den Raum an, verteilt Links und steuert den Start der Partie.</p>
+        </article>
+        <article class="archive-card">
+          <strong>Spieler*in</strong>
+          <p>Tritt mit eigenem Geraet bei und bekommt eine private Rolle, Inbox und verdeckte Aktionen.</p>
+        </article>
+        <article class="archive-card">
+          <strong>Board</strong>
+          <p>Zeigt die gemeinsame Lage fuer Beamer oder Begleitgeraet ohne geheime Informationen.</p>
+        </article>
+        <article class="archive-card">
+          <strong>Mechanik</strong>
+          <p>Werwolf-Verdacht, Secret-Hitler-Doktrinen, Dixit-Deutung und eine reaktive Systemengine greifen zusammen.</p>
+        </article>
       </div>
     </section>
 
@@ -1014,6 +1041,24 @@ function clearSession() {
   render();
 }
 
+function jumpToCard(id, focusSelector) {
+  const target = document.getElementById(id);
+  if (!target) {
+    return;
+  }
+  document.querySelectorAll(".mode-card, .panel").forEach((node) => {
+    node.classList.remove("highlight");
+  });
+  target.classList.add("highlight");
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (focusSelector) {
+    window.setTimeout(() => {
+      const field = target.querySelector(focusSelector);
+      field?.focus();
+    }, 220);
+  }
+}
+
 window.addEventListener("beforeunload", () => {
   closeStream();
 });
@@ -1032,6 +1077,22 @@ document.addEventListener("click", async (event) => {
   const action = target.dataset.action;
   if (action === "go-home") {
     clearSession();
+    return;
+  }
+  if (action === "jump-create") {
+    jumpToCard("create-card", 'input[name="teamName"]');
+    return;
+  }
+  if (action === "jump-join") {
+    jumpToCard("join-card", 'input[name="roomId"]');
+    return;
+  }
+  if (action === "jump-board") {
+    jumpToCard("board-card", 'input[name="roomId"]');
+    return;
+  }
+  if (action === "jump-system") {
+    jumpToCard("system-card");
     return;
   }
   if (action === "refresh") {
