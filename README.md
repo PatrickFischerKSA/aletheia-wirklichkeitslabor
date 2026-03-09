@@ -41,9 +41,20 @@ Die App ist jetzt auch fuer einen echten Node-Host vorbereitet:
 
 - `package.json` fuer Startskript und Node-Version
 - `Dockerfile` fuer Container-Deployments
+- `.github/workflows/check.yml` fuer GitHub-Checks
+- `.github/workflows/publish-ghcr.yml` fuer automatisches Container-Publishing nach GHCR
+- `render.yaml` fuer Render-Blueprint-Deployments
+- `railway.json` fuer Railway-Deployments
 - `PORT`- und `HOST`-Support ueber Umgebungsvariablen
 
 Jeder Node- oder Docker-Host funktioniert, solange `server.mjs` als Webdienst gestartet wird.
+
+Die konkrete Schritt-fuer-Schritt-Anleitung steht in [DEPLOY.md](/Users/patrickfischer/Documents/New%20project/aletheia-wirklichkeitslabor/DEPLOY.md).
+
+Wichtig:
+
+- GitHub Pages allein reicht fuer dieses Spiel nicht aus.
+- Die GitHub-Loesung hier ist deshalb: Repository + Actions + Container-Image + echter Web-Host.
 
 ### Variante A: Node-Host
 
