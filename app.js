@@ -107,7 +107,7 @@ async function ensureBackend() {
   if (ready) {
     return true;
   }
-  throw new Error("Der Spielserver läuft hier nicht korrekt. Starte im Projektordner `node server.mjs --host 0.0.0.0 --port 8787` und öffne genau diese URL, nicht nur eine statische HTML-Datei.");
+  throw new Error(`Diese geoeffnete Seite kommt nicht vom laufenden Spielserver. Aktuell offen: ${currentOrigin()}. Starte \`node server.mjs --host 0.0.0.0 --port 8787\` und oeffne danach genau die dort laufende Adresse per \`http\`, nicht eine alte Datei oder eine andere URL.`);
 }
 
 async function api(path, options = {}) {
@@ -365,7 +365,7 @@ function renderLanding() {
       <div>
         <p class="eyebrow">Synchronisierte Lernlandschaft fuer "Die echtere Wirklichkeit"</p>
         <h1 class="title">Aletheia Wirklichkeitslabor</h1>
-        <p class="lead">Ein Mehrgeraete-Rollenspiel mit Host-, Board- und Player-Modus. Zwei Lernende spielen verdeckt auf eigenen Endgeraeten, waehrend eine digitale Engine mit Live-Feeds, privaten Zuschriften, Eingriffsereignissen und synchronisierten Phasen den Verlauf laufend veraendert.</p>
+        <p class="lead">Ein Solo- und Mehrgeraete-Rollenspiel mit Host-, Player- und Board-Modus. Du kannst allein gegen einen digitalen Systempartner spielen oder zu zweit auf getrennten Endgeraeten, waehrend die Engine mit Live-Feeds, privaten Zuschriften, Eingriffsereignissen und synchronisierten Phasen den Verlauf laufend veraendert.</p>
         <div class="chip-row">
           <button type="button" class="chip-button" data-action="jump-create">Host-Modus wählen</button>
           <button type="button" class="chip-button" data-action="jump-solo">Solo-Modus wählen</button>
@@ -381,6 +381,7 @@ function renderLanding() {
           <span class="meta-badge">Raumcode + Live-Synchronisierung</span>
           <span class="meta-badge">${BUILD_ID}</span>
           <span class="meta-badge">${state.backendReady === false ? "API nicht erreichbar" : state.backendReady === true ? "API bereit" : "API wird geprüft"}</span>
+          <span class="meta-badge">Aktuelle URL: ${escapeHtml(currentOrigin())}</span>
         </div>
         ${state.error ? `<div class="danger-note">${escapeHtml(state.error)}</div>` : ""}
       </div>
@@ -653,12 +654,128 @@ function renderFeed(title, items, emptyText) {
   `;
 }
 
+function soloPhaseCopy(taskType) {
+  const map = {
+    "fragment-submit": {
+      title: "Du setzt das erste Signal",
+      text: "Waehle dein Fragment und sende einen Bildsatz. Danach antwortet der Systempartner verdeckt mit einem eigenen Deutungsimpuls."
+    },
+    "fragment-guess": {
+      title: "Die Maschine hat bereits geantwortet",
+      text: "Der Systempartner hat ein Gegenfragment gesetzt. Lies seinen Hinweis als ideologische Spur und ordne ihn einer Achse zu."
+    },
+    "doctrine-discard": {
+      title: "Du verengst den Doktrinraum",
+      text: "Streiche eine Karte aus dem Spiel. Der Systempartner setzt danach sofort die uebrig gebliebene Linie und verschiebt die Metriken."
+    },
+    response: {
+      title: "Verdacht gegen Gegenkraft",
+      text: "Markiere Schattenakteur, Vertrauensfigur und Eingriff. Der Systempartner meldet im Anschluss seine verdeckte Gegenmassnahme."
+    },
+    reflection: {
+      title: "Letzte Deutung der Runde",
+      text: "Deine Reflexion schliesst die Runde nicht allein ab: Danach schreibt auch der Systempartner seine Lesart ins Protokoll."
+    },
+    lobby: {
+      title: "Solo-Partie bereit",
+      text: "Die Engine hat Rollen und Gegenspiel vorbereitet. Sobald die Runde startet, antwortet der Systempartner automatisch in jeder Phase."
+    },
+    interlude: {
+      title: "Zwischenstand lesen",
+      text: "Die Runde ist archiviert. Pruefe, wie stark der Systempartner Druck, Ambiguitaet und Vertrauen verschoben hat."
+    },
+    finished: {
+      title: "Finale Auswertung",
+      text: "Die Solo-Partie ist abgeschlossen. Vergleiche dein Missionsziel mit dem Verlauf der Gegenkraft im Archiv."
+    }
+  };
+  return map[taskType] || {
+    title: "Systempartner aktiv",
+    text: "Die Engine reagiert nicht bloss dekorativ, sondern setzt verdeckte Gegenzuege und schreibt den weiteren Verlauf mit."
+  };
+}
+
+function renderSoloDuelPanel() {
+  const actor = state.snapshot.actor || {};
+  const task = actor.task || {};
+  const copy = soloPhaseCopy(task.type || state.snapshot.phase);
+  return `
+    <section class="panel solo-stage">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Solo-Duell</p>
+          <h2 class="section-title">Du gegen ${escapeHtml(actor.systemPartner || "Systempartner")}</h2>
+          <p class="subtle">Die Partie spielt sich als asymmetrischer Konflikt zwischen deinem Briefing und einer verdeckten digitalen Gegenlogik.</p>
+        </div>
+        <div class="solo-phase-badge">${escapeHtml(state.snapshot.shared.phaseTitle)}</div>
+      </div>
+      <div class="solo-duel-grid">
+        <article class="solo-actor-card solo-player">
+          <span class="solo-label">Deine Seite</span>
+          <h3>${escapeHtml(actor.name || "Solo-Spieler*in")}</h3>
+          <p>Du steuerst Auswahl, Verdacht, Intervention und Enddeutung direkt.</p>
+        </article>
+        <article class="solo-actor-card solo-system">
+          <span class="solo-label">Digitale Gegenkraft</span>
+          <h3>${escapeHtml(actor.systemPartner || "Systempartner")}</h3>
+          <p>Die Engine waehlt verdeckt Fragmente, Doktrinen und Eingriffe und verschiebt dadurch den Verlauf.</p>
+        </article>
+      </div>
+      <div class="solo-directive">
+        <strong>${escapeHtml(copy.title)}</strong>
+        <p>${escapeHtml(copy.text)}</p>
+      </div>
+    </section>
+  `;
+}
+
+function renderSoloPartnerPanel() {
+  const actor = state.snapshot.actor || {};
+  const task = actor.task || {};
+  const copy = soloPhaseCopy(task.type || state.snapshot.phase);
+  return `
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Systempartner-Logik</h2>
+          <p class="subtle">Was die Gegenkraft in dieser Phase tut und warum der Solo-Modus nicht nur eine Ein-Personen-Kopie ist.</p>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="status-banner">
+          <div>
+            <strong>Aktuelle Gegenbewegung</strong>
+            <p>${escapeHtml(copy.text)}</p>
+          </div>
+          <div class="chip-row">
+            <span class="chip">Rolle: verdeckter Mitspieler</span>
+            <span class="chip">Antwortet automatisch</span>
+            <span class="chip">Metriken werden live verschoben</span>
+          </div>
+        </div>
+        <div class="dual-grid">
+          <article class="archive-card">
+            <strong>Wie der Systempartner spielt</strong>
+            <p>Er liest Szenentags, dominante Doktrinen, Druck- und Vertrauenswerte und erzeugt daraus eigene Gegenzuege.</p>
+          </article>
+          <article class="archive-card">
+            <strong>Worauf du achten solltest</strong>
+            <p>Die eigentliche Spannung liegt nicht nur in deiner Wahl, sondern darin, wie die Engine dieselbe Lage gegen deine Lesart zurueckdreht.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderPlayerTask() {
   const task = state.snapshot.actor?.task;
   if (!task) {
     return `<section class="panel"><div class="empty">Keine private Aufgabe verfuegbar.</div></section>`;
   }
-  const seatName = state.snapshot.actor.name || `Spieler*in ${state.seat}`;
+  const seatName = state.view === "solo"
+    ? (state.snapshot.actor.name || "Solo-Spieler*in")
+    : (state.snapshot.actor.name || `Spieler*in ${state.seat}`);
   let inner = "";
   if (task.type === "fragment-submit") {
     inner = `
@@ -763,7 +880,7 @@ function renderPlayerTask() {
     <section class="panel">
       <div class="section-head">
         <div>
-          <h2 class="section-title">Private Konsole von ${escapeHtml(seatName)}</h2>
+          <h2 class="section-title">${state.view === "solo" ? `Deine Solo-Konsole: ${escapeHtml(seatName)}` : `Private Konsole von ${escapeHtml(seatName)}`}</h2>
           <p class="subtle">${escapeHtml(task.title)}</p>
         </div>
       </div>
@@ -785,8 +902,8 @@ function renderMissionCard() {
     <section class="panel">
       <div class="section-head">
         <div>
-          <h2 class="section-title">Geheimes Briefing</h2>
-          <p class="subtle">Nur auf diesem Endgeraet sichtbar.</p>
+          <h2 class="section-title">${state.view === "solo" ? "Dein Einsatzprofil" : "Geheimes Briefing"}</h2>
+          <p class="subtle">${state.view === "solo" ? "Dein Soloprofil gegen die digitale Gegenkraft." : "Nur auf diesem Endgeraet sichtbar."}</p>
         </div>
       </div>
       <div class="task-card">
@@ -881,25 +998,15 @@ function renderLiveView() {
   if (state.view === "solo") {
     return `
       <div class="surface">
+        ${renderSoloDuelPanel()}
         ${renderSharedBoard()}
         <div class="phase-grid">
           <div class="surface">
             ${renderMissionCard()}
-            <section class="panel">
-              <div class="section-head">
-                <div>
-                  <h2 class="section-title">Systempartner</h2>
-                  <p class="subtle">Die Gegenfigur reagiert automatisch im Hintergrund auf deine Zuege und die aktuelle Metriklage.</p>
-                </div>
-              </div>
-              <div class="task-card">
-                <h3>${escapeHtml(state.snapshot.actor?.systemPartner || "Systempartner")}</h3>
-                <p>Du spielst allein, aber nicht ohne Gegenkraft: Die Engine setzt verdeckte Antworten, waehlt Doktrinen mit aus und schreibt eigene Interventionen in die Runde.</p>
-              </div>
-            </section>
             ${renderPlayerTask()}
           </div>
           <div class="surface">
+            ${renderSoloPartnerPanel()}
             ${renderFeed("Private Inbox", state.snapshot.actor?.privateFeed || [], "Noch keine privaten Zuschriften.")}
             ${renderFeed("Oeffentlicher Feed", state.snapshot.feed, "Noch keine oeffentlichen Meldungen.")}
           </div>
@@ -1076,7 +1183,7 @@ function renderConnected() {
       <div>
         <p class="eyebrow">${state.view === "host" ? "Host-Modus" : state.view === "player" ? `Privatmodus ${escapeHtml(state.seat)}` : state.view === "solo" ? "Solo-Modus" : "Board-Modus"}</p>
         <h1 class="title">${escapeHtml(state.snapshot.teamName || "Aletheia")}</h1>
-        <p class="lead">${escapeHtml(state.snapshot.className || "Synchronisierte Mehrgeraete-Partie")}</p>
+        <p class="lead">${state.view === "solo" ? `Einzelpartie gegen ${escapeHtml(state.snapshot.actor?.systemPartner || "den Systempartner")}. Jede deiner Entscheidungen wird sofort von einer verdeckten digitalen Gegenlogik beantwortet.` : escapeHtml(state.snapshot.className || "Synchronisierte Mehrgeraete-Partie")}</p>
         <div class="chip-row">
           <span class="chip">Raum ${escapeHtml(state.roomId)}</span>
           <span class="chip">${escapeHtml(state.snapshot.shared.phaseTitle)}</span>

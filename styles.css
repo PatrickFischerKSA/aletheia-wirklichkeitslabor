@@ -403,6 +403,80 @@ textarea {
   border: 1px solid rgba(30, 90, 81, 0.12);
 }
 
+.solo-stage {
+  background:
+    linear-gradient(135deg, rgba(151, 45, 29, 0.12), rgba(30, 90, 81, 0.12)),
+    rgba(255, 249, 241, 0.9);
+}
+
+.solo-duel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.solo-actor-card {
+  border-radius: 22px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.solo-player {
+  box-shadow: inset 0 0 0 1px rgba(30, 90, 81, 0.18);
+}
+
+.solo-system {
+  box-shadow: inset 0 0 0 1px rgba(151, 45, 29, 0.18);
+}
+
+.solo-label {
+  display: inline-flex;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(22, 17, 13, 0.06);
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.solo-actor-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.solo-actor-card p,
+.solo-directive p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.solo-phase-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(151, 45, 29, 0.1);
+  color: var(--accent);
+  font-size: 0.86rem;
+}
+
+.solo-directive {
+  margin-top: 14px;
+  border-left: 4px solid var(--accent-2);
+  border-radius: 0 18px 18px 0;
+  padding: 14px 16px;
+  background: rgba(30, 90, 81, 0.08);
+}
+
+.solo-directive strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
 .status-phase {
   margin: 0;
   font-size: 1.55rem;
@@ -693,6 +767,7 @@ textarea {
   .phase-grid,
   .dual-grid,
   .triple-grid,
+  .solo-duel-grid,
   .field-grid,
   .mode-grid,
   .kpi-grid {
